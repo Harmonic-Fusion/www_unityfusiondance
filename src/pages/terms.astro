@@ -1,0 +1,56 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import DocEmbed from '../components/DocEmbed.astro';
+import { links } from '../content/links';
+---
+
+<BaseLayout
+  title="Terms"
+  description="Unity Fusion liability release and terms for attending events."
+>
+  <section class="section">
+    <div class="container">
+      <p class="section__eyebrow">Liability release</p>
+      <h1 class="section__title">Terms</h1>
+      <p class="section__lead">
+        Please email
+        <a href={links.mailto}>unityfusiondance@gmail.com</a>
+        with any questions or concerns. We’re here to help!
+      </p>
+      <DocEmbed src={links.termsCurrent} title="Unity Fusion Terms CURRENT" />
+    </div>
+  </section>
+
+  <section class="section section--tight">
+    <div class="container">
+      <h2 class="section__title">Historical</h2>
+      <ul class="history-list">
+        <li>
+          <a href={links.terms2024} target="_blank" rel="noopener noreferrer">
+            Unity Fusion Terms 2024-02-13
+          </a>
+        </li>
+        <li>
+          <a href={links.terms2023} target="_blank" rel="noopener noreferrer">
+            Unity Fusion Terms 2023-05-13
+          </a>
+        </li>
+      </ul>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .history-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .history-list li {
+    padding: 0.75rem 0;
+    border-top: 1px solid rgba(7, 140, 140, 0.16);
+  }
+</style>

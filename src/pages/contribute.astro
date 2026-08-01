@@ -1,0 +1,123 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { links } from '../content/links';
+
+const scale = [
+  { amount: '$14', label: 'Estimated per person to cover our costs' },
+  { amount: '$28', label: 'To support one another' },
+  { amount: '$580', label: 'Our estimated event costs' },
+  { amount: '$825', label: 'Goal for growing Unity Fusion' },
+  { amount: '$1000+', label: 'Goal toward yearly events' },
+];
+---
+
+<BaseLayout
+  title="Contribute"
+  description="Support Unity Fusion with a sliding-scale contribution via Venmo, PayPal, cash, or volunteering."
+>
+  <section class="section">
+    <div class="container">
+      <p class="section__eyebrow">Sliding scale</p>
+      <h1 class="section__title">Contribute</h1>
+      <p class="section__lead">
+        We want everyone, regardless of socioeconomic position, to be able to participate.
+        Contributions make dance events happen and help build a strong community beyond the floor.
+        Giving is collective, anonymous, and based on trust, generosity, and love.
+      </p>
+      <p class="scale-range"><strong>$1 to $1000</strong> sliding scale</p>
+    </div>
+  </section>
+
+  <section class="section section--tight">
+    <div class="container">
+      <ul class="scale-list">
+        {
+          scale.map((item) => (
+            <li>
+              <span class="scale-list__amount">{item.amount}</span>
+              <span class="scale-list__label">{item.label}</span>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <h2 class="section__title">How to give</h2>
+      <ul class="pay-list">
+        <li>
+          <a href={links.venmo} target="_blank" rel="noopener noreferrer">Pay by Venmo</a>
+          {' '}to Karsten Kaz (@KarstenKaz)
+        </li>
+        <li>
+          <a href={links.paypal} target="_blank" rel="noopener noreferrer">Pay by PayPal</a>
+          {' '}to Karsten Kaczmar
+        </li>
+        <li>Pay by cash into the box at the door</li>
+        <li>Pay via QR code at the door</li>
+        <li>
+          <a href={links.volunteerForm} target="_blank" rel="noopener noreferrer">Volunteer your time</a>
+        </li>
+      </ul>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .scale-range {
+    font-family: var(--font-display);
+    font-size: 1.35rem;
+    color: var(--color-teal);
+  }
+
+  .scale-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .scale-list li {
+    display: grid;
+    grid-template-columns: 7rem 1fr;
+    gap: 1rem;
+    align-items: baseline;
+    padding: 0.85rem 0;
+    border-top: 1px solid rgba(7, 140, 140, 0.16);
+  }
+
+  .scale-list__amount {
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    color: var(--color-teal);
+  }
+
+  .scale-list__label {
+    color: var(--color-ink-soft);
+  }
+
+  .pay-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 0.85rem;
+  }
+
+  .pay-list li {
+    padding: 0.9rem 0;
+    border-top: 1px solid rgba(7, 140, 140, 0.16);
+    color: var(--color-ink-soft);
+    font-size: 1.1rem;
+  }
+
+  @media (max-width: 560px) {
+    .scale-list li {
+      grid-template-columns: 1fr;
+      gap: 0.25rem;
+    }
+  }
+</style>

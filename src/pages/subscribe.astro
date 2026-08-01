@@ -1,0 +1,53 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { links } from '../content/links';
+---
+
+<BaseLayout
+  title="Subscribe"
+  description="Subscribe to the Unity Fusion mailing list for event updates in Eugene."
+>
+  <section class="section subscribe">
+    <div class="container subscribe__panel">
+      <img
+        src="/assets/images/logo-transparent.png"
+        alt=""
+        width="120"
+        height="120"
+        class="subscribe__logo"
+      />
+      <p class="section__eyebrow">Mailing list</p>
+      <h1 class="section__title">Subscribe</h1>
+      <p class="section__lead">
+        Stay up to date with Unity Fusion gatherings, workshops, and community news.
+      </p>
+      <a class="btn" href={links.subscribe} target="_blank" rel="noopener noreferrer">
+        Subscribe to our mailing list
+      </a>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .subscribe {
+    min-height: calc(100svh - var(--header-h) - 14rem);
+    display: grid;
+    align-items: center;
+  }
+
+  .subscribe__panel {
+    max-width: 36rem;
+    text-align: center;
+    animation: fade-up 0.8s var(--ease-out) both;
+  }
+
+  .subscribe__logo {
+    width: 6rem;
+    height: auto;
+    margin: 0 auto 1rem;
+  }
+
+  .subscribe .section__lead {
+    margin-inline: auto;
+  }
+</style>

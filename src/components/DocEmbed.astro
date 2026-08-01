@@ -1,0 +1,16 @@
+---
+interface Props {
+  src: string;
+  title?: string;
+  tall?: boolean;
+}
+
+const { src, title = 'Document', tall = true } = Astro.props;
+---
+
+<iframe
+  class:list={['embed-frame', { 'embed-frame--tall': tall }]}
+  src={src}
+  title={title}
+  loading="lazy"
+></iframe>

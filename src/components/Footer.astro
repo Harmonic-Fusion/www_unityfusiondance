@@ -1,0 +1,89 @@
+---
+import { links } from '../content/links';
+---
+
+<footer class="site-footer">
+  <div class="site-footer__panel band">
+    <div class="container site-footer__cta">
+      <div>
+        <p class="section__eyebrow">Stay in the loop</p>
+        <h2 class="section__title">Subscribe to our mailing list</h2>
+        <p class="section__lead">
+          Get updates on socials, workshops, and community gatherings in Eugene.
+        </p>
+      </div>
+      <a class="btn" href={links.subscribe} target="_blank" rel="noopener noreferrer">
+        Subscribe
+      </a>
+    </div>
+  </div>
+
+  <div class="site-footer__meta">
+    <div class="container site-footer__meta-inner">
+      <p class="brand">Unity Fusion</p>
+      <p>
+        Growing fusion dance in Eugene through joyful gatherings.
+      </p>
+      <ul class="site-footer__links">
+        <li>
+          <a href={links.facebook} target="_blank" rel="noopener noreferrer">Facebook</a>
+        </li>
+        <li>
+          <a href={links.mailto}>unityfusiondance@gmail.com</a>
+        </li>
+        <li><a href="/subscribe/">Subscribe</a></li>
+        <li><a href="/contribute/">Contribute</a></li>
+        <li><a href="/terms/">Terms</a></li>
+      </ul>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .site-footer__cta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+  }
+
+  .site-footer__cta .section__title {
+    margin-bottom: 0.5rem;
+  }
+
+  .site-footer__cta .section__lead {
+    margin-bottom: 0;
+  }
+
+  .site-footer__meta {
+    padding: 1.75rem 0 2.25rem;
+    background: rgba(255, 255, 255, 0.7);
+    border-top: 1px solid rgba(7, 140, 140, 0.1);
+  }
+
+  .site-footer__meta-inner {
+    display: grid;
+    gap: 0.5rem;
+  }
+
+  .site-footer__meta .brand {
+    margin: 0;
+    font-size: 1.25rem;
+    color: var(--color-teal);
+  }
+
+  .site-footer__meta p {
+    margin: 0;
+    color: var(--color-ink-soft);
+  }
+
+  .site-footer__links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem 1.25rem;
+    margin: 0.75rem 0 0;
+    padding: 0;
+    list-style: none;
+  }
+</style>

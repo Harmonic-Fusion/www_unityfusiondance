@@ -1,0 +1,25 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import DocEmbed from '../components/DocEmbed.astro';
+import { links } from '../content/links';
+---
+
+<BaseLayout
+  title="Terms Amazing Weekend"
+  description="Liability waiver and photo release for the Amazing Weekender event."
+>
+  <section class="section">
+    <div class="container">
+      <p class="section__eyebrow">Amazing Weekender</p>
+      <h1 class="section__title">Terms Amazing Weekend</h1>
+      <p class="section__lead">
+        Unity Fusion + Dance Ninjas Weekend Terms. Questions?
+        <a href={links.mailto}>unityfusiondance@gmail.com</a>
+      </p>
+      <DocEmbed src={links.termsAmazing} title="Amazing Weekender Terms" />
+      <p style="margin-top: 1.25rem">
+        <a href="/amazing/">Back to Amazing Weekender</a>
+      </p>
+    </div>
+  </section>
+</BaseLayout>

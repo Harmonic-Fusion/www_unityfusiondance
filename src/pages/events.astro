@@ -1,0 +1,74 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import CalendarEmbed from '../components/CalendarEmbed.astro';
+import Accordion from '../components/Accordion.astro';
+import { links } from '../content/links';
+import { pastEvents } from '../content/past-events';
+
+const accordionItems = pastEvents.map((event) => {
+  const parts: string[] = [];
+  if (event.body) {
+    parts.push(
+      ...event.body
+        .trim()
+        .split(/\n\n+/)
+        .map((p) => `<p>${p.replace(/\n/g, '<br />')}</p>`),
+    );
+  }
+  if (event.facebook) {
+    parts.push(
+      `<p><a href="${event.facebook}" target="_blank" rel="noopener noreferrer">Facebook event</a></p>`,
+    );
+  }
+  if (!parts.length) {
+    parts.push(
+      `<p>Monthly fusion social at Xcape Dance Academy (1416 W 7th Ave, Eugene OR 97402). Typical night: 7–8 pm lesson, 8–10:30 pm dancing. Sliding scale around $14/person.</p>`,
+    );
+  }
+  return {
+    title: event.title,
+    subtitle: event.date,
+    html: parts.join(''),
+  };
+});
+---
+
+<BaseLayout
+  title="Events"
+  description="Upcoming Unity Fusion socials, workshops, and past monthly dances in Eugene."
+>
+  <section class="section">
+    <div class="container">
+      <p class="section__eyebrow">Unity Fusion Dancing</p>
+      <h1 class="section__title">Events</h1>
+      <p class="section__lead">
+        Unity Fusion holds frequent social dance events throughout the year. Monthly events are
+        typically planned for the 1st Saturday of the month.
+        <a href={links.subscribe} target="_blank" rel="noopener noreferrer">Subscribe to our email list</a>
+        or follow us on
+        <a href={links.facebook} target="_blank" rel="noopener noreferrer">Facebook</a>
+        to stay up to date. Learn more in our <a href="/faq/">FAQ</a>.
+      </p>
+    </div>
+  </section>
+
+  <section class="section section--tight">
+    <div class="container">
+      <h2 class="section__title">Upcoming events</h2>
+      <CalendarEmbed
+        src={links.eventsCalendarSrc}
+        title="Unity Fusion Events Calendar"
+        color="%237bd148"
+        tall
+      />
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <h2 class="section__title">Past events</h2>
+      <p class="section__lead">A look back at recent monthly socials and special gatherings.</p>
+      <Accordion items={accordionItems} name="past-events" />
+    </div>
+  </section>
+</BaseLayout>

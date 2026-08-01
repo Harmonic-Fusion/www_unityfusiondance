@@ -1,0 +1,128 @@
+---
+interface Props {
+  images: { src: string; alt: string }[];
+  intervalMs?: number;
+}
+
+const { images, intervalMs = 5500 } = Astro.props;
+---
+
+<div class="carousel" data-carousel data-interval={intervalMs}>
+  <div class="carousel__track">
+    {
+      images.map((image, index) => (
+        <figure class:list={['carousel__slide', { 'is-active': index === 0 }]} data-slide>
+          <img src={image.src} alt={image.alt} loading={index === 0 ? 'eager' : 'lazy'} />
+        </figure>
+      ))
+    }
+  </div>
+  <div class="carousel__dots" role="tablist" aria-label="Carousel slides">
+    {
+      images.map((_, index) => (
+        <button
+          type="button"
+          class:list={['carousel__dot', { 'is-active': index === 0 }]}
+          aria-label={`Show slide ${index + 1}`}
+          data-dot={index}
+        />
+      ))
+    }
+  </div>
+</div>
+
+<script>
+  const root = document.querySelector('[data-carousel]');
+  if (root instanceof HTMLElement) {
+    const slides = Array.from(root.querySelectorAll('[data-slide]'));
+    const dots = Array.from(root.querySelectorAll('[data-dot]'));
+    const intervalMs = Number(root.dataset.interval || 5500);
+    let index = 0;
+    let timer: number | undefined;
+
+    const show = (next: number) => {
+      index = (next + slides.length) % slides.length;
+      slides.forEach((slide, i) => slide.classList.toggle('is-active', i === index));
+      dots.forEach((dot, i) => dot.classList.toggle('is-active', i === index));
+    };
+
+    const start = () => {
+      window.clearInterval(timer);
+      timer = window.setInterval(() => show(index + 1), intervalMs);
+    };
+
+    dots.forEach((dot) => {
+      dot.addEventListener('click', () => {
+        const i = Number((dot as HTMLElement).dataset.dot);
+        show(i);
+        start();
+      });
+    });
+
+    root.addEventListener('mouseenter', () => window.clearInterval(timer));
+    root.addEventListener('mouseleave', start);
+    start();
+  }
+</script>
+
+<style>
+  .carousel {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 100%;
+    overflow: hidden;
+  }
+
+  .carousel__track,
+  .carousel__slide {
+    position: absolute;
+    inset: 0;
+  }
+
+  .carousel__slide {
+    margin: 0;
+    opacity: 0;
+    transition: opacity 1.1s var(--ease-out);
+  }
+
+  .carousel__slide.is-active {
+    opacity: 1;
+    z-index: 1;
+  }
+
+  .carousel__slide img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    animation: kenburns 14s var(--ease-out) infinite alternate;
+  }
+
+  .carousel__dots {
+    position: absolute;
+    z-index: 2;
+    left: 50%;
+    bottom: 1.1rem;
+    display: flex;
+    gap: 0.45rem;
+    transform: translateX(-50%);
+  }
+
+  .carousel__dot {
+    width: 0.65rem;
+    height: 0.65rem;
+    padding: 0;
+    border: 0;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.45);
+    cursor: pointer;
+    transition:
+      transform 0.2s var(--ease-out),
+      background 0.2s var(--ease-out);
+  }
+
+  .carousel__dot.is-active {
+    background: var(--color-mint);
+    transform: scale(1.2);
+  }
+</style>

@@ -1,0 +1,95 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { links } from '../content/links';
+---
+
+<BaseLayout
+  title="Get Involved"
+  description="Volunteer, teach, DJ, give feedback, or contribute to Unity Fusion in Eugene."
+>
+  <section class="section">
+    <div class="container prose">
+      <p class="section__eyebrow">Community</p>
+      <h1 class="section__title">Get Involved</h1>
+      <p class="section__lead">
+        The best way to contribute is to bring your energy and joy to the dance floor. Check out our
+        events, reach out to one another, and help spread the word — share this website, our
+        Facebook, and our events.
+      </p>
+    </div>
+  </section>
+
+  <section class="section section--tight">
+    <div class="container">
+      <h2 class="section__title">Volunteering for events</h2>
+      <p class="section__lead">
+        Unity Fusion is committed to creating community and needs many people to make our events
+        happen. Ways we need help:
+      </p>
+      <ul class="role-list">
+        <li>
+          <strong>Door tending</strong> — Help greet, check in, and orient people as they enter.
+        </li>
+        <li>
+          <strong>Theme</strong> — Help organizers before and during the event with materials and vibe.
+        </li>
+        <li>
+          <strong>Teaching</strong> — Help orient new dancers and bring dance skills to our community.
+          <a href={links.teachingPolicy} target="_blank" rel="noopener noreferrer">Teaching Policies</a>
+        </li>
+        <li>
+          <strong>DJ</strong> — Play music and craft an incredible journey for our dance.
+          <a href={links.djPolicy} target="_blank" rel="noopener noreferrer">DJ Policies</a>
+        </li>
+      </ul>
+      <div class="btn-row">
+        <a class="btn" href={links.volunteerForm} target="_blank" rel="noopener noreferrer">
+          Volunteer Interest Form
+        </a>
+        <a class="btn btn--outline" href={links.feedbackForm} target="_blank" rel="noopener noreferrer">
+          Feedback Form
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container prose">
+      <h2 class="section__title">Contributing money</h2>
+      <p>
+        Unity Fusion requires contributions to make our events happen — typically through payments
+        by attendees.
+        <a href="/contribute/">Details on how to contribute financially</a>.
+      </p>
+      <h2 class="section__title">Contact us</h2>
+      <p>
+        For everything else, email Karsten or Dylan at
+        <a href={links.mailto}>unityfusiondance@gmail.com</a>.
+      </p>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .role-list {
+    margin: 0 0 1.5rem;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 0.85rem;
+  }
+
+  .role-list li {
+    padding: 1rem 0;
+    border-top: 1px solid rgba(7, 140, 140, 0.18);
+    color: var(--color-ink-soft);
+  }
+
+  .role-list strong {
+    display: block;
+    margin-bottom: 0.2rem;
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    color: var(--color-ink);
+  }
+</style>

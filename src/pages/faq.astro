@@ -1,0 +1,21 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Accordion from '../components/Accordion.astro';
+import { faqItems } from '../content/faq';
+
+const items = faqItems.map((item) => ({
+  title: item.question,
+  html: item.answerHtml,
+}));
+---
+
+<BaseLayout title="FAQ" description="Frequently asked questions about Unity Fusion dance events.">
+  <section class="section">
+    <div class="container">
+      <p class="section__eyebrow">Questions</p>
+      <h1 class="section__title">FAQ</h1>
+      <p class="section__lead">Frequently asked questions about fusion dance, music, cost, and getting involved.</p>
+      <Accordion items={items} name="faq" />
+    </div>
+  </section>
+</BaseLayout>

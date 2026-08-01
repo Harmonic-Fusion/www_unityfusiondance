@@ -1,0 +1,140 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import CalendarEmbed from '../components/CalendarEmbed.astro';
+import { links } from '../content/links';
+---
+
+<BaseLayout
+  title="Amazing Weekender!"
+  description="Make every dance amazing — Unity Fusion weekend intensive with workshops and socials in Eugene."
+>
+  <section class="amazing-hero">
+    <div class="amazing-hero__bg" aria-hidden="true"></div>
+    <div class="container amazing-hero__content">
+      <p class="section__eyebrow">Weekend intensive</p>
+      <h1 class="amazing-hero__title brand">Make Every Dance Amazing!</h1>
+      <p class="amazing-hero__tag">
+        Turn rare “WOW!” dances into every dance — any partner, any song, every time.
+      </p>
+      <p class="amazing-hero__meta">August 2 &amp; 3, 2025 · Eugene, Oregon</p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container prose">
+      <h2 class="section__title">Thank you for an amazing event!</h2>
+      <p>
+        We believe that every dance can be amazing — not only when you find that perfect person for
+        the perfect song. We want everyone to be able to express and connect with dance.
+      </p>
+      <p>
+        We created this weekend intensive to learn how to create more magical dances than ever
+        before with any partner to any music. Join us for two days of workshops with world-class
+        dance instructor <strong>Andrew Sutton</strong>, plus two amazing nights you will remember.
+      </p>
+      <div class="btn-row">
+        <a class="btn btn--outline" href="/terms-amazing/">Liability Waiver &amp; Photo Release</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--tight">
+    <div class="container">
+      <h2 class="section__title">Schedule</h2>
+      <CalendarEmbed
+        src={links.amazingCalendarSrc}
+        title="Amazing Weekender Schedule"
+        color="%23ffad46"
+        tall
+      />
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <h2 class="section__title">Venues</h2>
+      <div class="venues">
+        <article>
+          <h3>Xcape Dance Academy</h3>
+          <p>1416 W 7th Ave, Eugene, OR 97402</p>
+          <p>Saturday and Sunday workshops. Saturday night social.</p>
+          <p><strong>Do not park at the convenience store.</strong></p>
+        </article>
+        <article>
+          <h3>Platform 360</h3>
+          <p>1840 Willamette St, Eugene, OR 97401</p>
+          <p>Friday teacher training.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .amazing-hero {
+    position: relative;
+    min-height: 52vh;
+    display: grid;
+    align-items: end;
+    color: var(--color-white);
+    overflow: hidden;
+  }
+
+  .amazing-hero__bg {
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(120deg, rgba(7, 100, 110, 0.88), rgba(8, 40, 55, 0.75)),
+      url('/assets/images/dance-06.jpg') center / cover;
+    transform: scale(1.02);
+    animation: kenburns 18s var(--ease-out) infinite alternate;
+  }
+
+  .amazing-hero__content {
+    position: relative;
+    z-index: 1;
+    padding-block: 4rem 3rem;
+    animation: fade-up 0.85s var(--ease-out) both;
+  }
+
+  .amazing-hero__title {
+    margin: 0 0 0.75rem;
+    font-size: clamp(2.2rem, 6vw, 3.75rem);
+    color: var(--color-white);
+  }
+
+  .amazing-hero__tag,
+  .amazing-hero__meta {
+    max-width: 36rem;
+    margin: 0 0 0.75rem;
+    color: rgba(255, 255, 255, 0.92);
+  }
+
+  .amazing-hero__meta {
+    font-family: var(--font-display);
+    color: var(--color-mint);
+    font-size: 1.15rem;
+  }
+
+  .venues {
+    display: grid;
+    gap: 1.25rem;
+    grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  }
+
+  .venues article {
+    padding: 1.25rem 0;
+    border-top: 1px solid rgba(7, 140, 140, 0.25);
+  }
+
+  .venues h3 {
+    margin: 0 0 0.4rem;
+    font-size: 1.3rem;
+    color: var(--color-teal);
+  }
+
+  .venues p {
+    margin: 0 0 0.4rem;
+    color: var(--color-ink-soft);
+  }
+</style>

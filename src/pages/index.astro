@@ -1,0 +1,104 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Carousel from '../components/Carousel.astro';
+
+const carouselImages = [
+  { src: '/assets/images/dance-04.jpg', alt: 'Partners dancing at a Unity Fusion social' },
+  { src: '/assets/images/dance-03.jpg', alt: 'Dancers gathered on the floor at a social' },
+  { src: '/assets/images/dance-06.jpg', alt: 'Unity Fusion community dancing together' },
+  { src: '/assets/images/dance-02.jpg', alt: 'Close connection on the dance floor' },
+  { src: '/assets/images/dance-05.jpg', alt: 'Social dancers in motion' },
+];
+---
+
+<BaseLayout title="Home">
+  <section class="hero">
+    <div class="hero__media" aria-hidden="true">
+      <Carousel images={carouselImages} />
+      <div class="hero__veil"></div>
+    </div>
+    <div class="hero__content container">
+      <img
+        class="hero__logo"
+        src="/assets/images/logo-transparent.png"
+        alt="Unity Fusion Dance logo"
+        width="160"
+        height="160"
+      />
+      <h1 class="brand hero__brand">Unity Fusion</h1>
+      <p class="hero__headline">Welcome to our community</p>
+      <p class="hero__lead">
+        Our mission is to create unity by fusing our differences together into a greater whole.
+        Unity Fusion grows and enriches the fusion dance scene in Eugene through joyful gatherings.
+      </p>
+      <div class="btn-row">
+        <a class="btn" href="/events/">Upcoming Events</a>
+        <a class="btn btn--ghost" href="/subscribe/">Subscribe</a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .hero {
+    position: relative;
+    min-height: calc(100svh - var(--header-h));
+    display: grid;
+    align-items: end;
+    color: var(--color-white);
+    overflow: hidden;
+  }
+
+  .hero__media {
+    position: absolute;
+    inset: 0;
+  }
+
+  .hero__veil {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    background:
+      linear-gradient(180deg, rgba(7, 60, 70, 0.25) 0%, rgba(7, 40, 50, 0.55) 45%, rgba(8, 28, 36, 0.88) 100%),
+      radial-gradient(ellipse at 20% 20%, rgba(108, 217, 186, 0.25), transparent 50%);
+  }
+
+  .hero__content {
+    position: relative;
+    z-index: 3;
+    padding-block: clamp(3rem, 10vh, 6rem) clamp(3.5rem, 10vh, 5.5rem);
+    animation: fade-up 0.9s var(--ease-out) both;
+  }
+
+  .hero__logo {
+    width: clamp(5.5rem, 12vw, 8rem);
+    height: auto;
+    margin-bottom: 0.75rem;
+    padding: 0.45rem;
+    border-radius: 50%;
+    background: var(--color-white);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  }
+
+  .hero__brand {
+    margin: 0 0 0.35rem;
+    font-size: clamp(2.8rem, 8vw, 4.75rem);
+    color: var(--color-white);
+    text-shadow: 0 10px 40px rgba(0, 0, 0, 0.35);
+  }
+
+  .hero__headline {
+    margin: 0 0 0.75rem;
+    font-family: var(--font-display);
+    font-size: clamp(1.35rem, 3vw, 1.85rem);
+    font-weight: 400;
+    color: var(--color-mint);
+  }
+
+  .hero__lead {
+    max-width: 34rem;
+    margin-bottom: 1.5rem;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 1.125rem;
+  }
+</style>

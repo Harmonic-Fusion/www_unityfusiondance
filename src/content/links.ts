@@ -9,6 +9,10 @@ export const links = {
   spotifyFaq: 'https://open.spotify.com/playlist/4jT2a2PsbmLKhFhlBz3nda',
   eventsCalendarSrc:
     'a30e664eb060c41ce9863fde1b467dcac90918e67423958a0223b4ca6f369355@group.calendar.google.com',
+  eventsCalendarSubscribe:
+    'https://calendar.google.com/calendar/u/0?cid=YTMwZTY2NGViMDYwYzQxY2U5ODYzZmRlMWI0NjdkY2FjOTA5MThlNjc0MjM5NThhMDIyM2I0Y2E2ZjM2OTM1NUBncm91cC5jYWxlbmRhci5nb29nbGUuY29t',
+  eventsCalendarView:
+    'https://calendar.google.com/calendar/embed?src=a30e664eb060c41ce9863fde1b467dcac90918e67423958a0223b4ca6f369355%40group.calendar.google.com&mode=AGENDA',
   amazingCalendarSrc:
     'de99e4c8be937fd51fac513b95f5709e0d82b16a47b6c1c22f7fbbadf56c62b3@group.calendar.google.com',
   signInForm:

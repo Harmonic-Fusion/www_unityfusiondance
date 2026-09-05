@@ -1,0 +1,278 @@
+---
+import { links } from '../content/links';
+
+interface Props {
+  calendarId?: string;
+  daysAhead?: number;
+  subscribeUrl?: string;
+  viewUrl?: string;
+}
+
+const {
+  calendarId = links.eventsCalendarSrc,
+  daysAhead = 90,
+  subscribeUrl = links.eventsCalendarSubscribe,
+  viewUrl = links.eventsCalendarView,
+} = Astro.props;
+---
+
+<section class="section section--tight">
+  <div class="container">
+    <div
+      class="upcoming-events"
+      data-upcoming-events
+      data-calendar-id={calendarId}
+      data-days-ahead={daysAhead}
+    >
+      <div class="upcoming-events__header">
+        <h2 class="section__title">Upcoming events</h2>
+        <div class="btn-row upcoming-events__actions">
+          <a
+            class="btn btn--outline"
+            href={subscribeUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Add to Google Calendar
+          </a>
+          <a class="btn btn--outline" href={viewUrl} target="_blank" rel="noopener noreferrer">
+            View calendar
+          </a>
+        </div>
+      </div>
+
+      <div
+        class="upcoming-events__loading"
+        data-upcoming-loading
+        aria-live="polite"
+        aria-hidden="true"
+      >
+        <span class="upcoming-events__spinner" aria-hidden="true"></span>
+        <span>Loading events…</span>
+      </div>
+
+      <div class="upcoming-events__list" data-upcoming-list></div>
+
+      <dialog class="upcoming-events__modal" data-upcoming-modal>
+        <div class="upcoming-events__modal-panel">
+          <button
+            type="button"
+            class="upcoming-events__modal-close"
+            data-modal-close
+            aria-label="Close"
+          >
+            ×
+          </button>
+          <h3 class="upcoming-events__modal-title" data-modal-title></h3>
+          <p class="upcoming-events__modal-meta" data-modal-time></p>
+          <p class="upcoming-events__modal-meta" data-modal-location></p>
+          <div class="upcoming-events__modal-body prose" data-modal-description></div>
+        </div>
+      </dialog>
+    </div>
+  </div>
+</section>
+
+<script>
+  import '../scripts/calendar-events';
+</script>
+
+<style>
+  .upcoming-events__header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem 1.5rem;
+    margin-bottom: var(--space-md);
+  }
+
+  .upcoming-events__header .section__title {
+    margin-bottom: 0;
+  }
+
+  .upcoming-events__actions {
+    flex-shrink: 0;
+  }
+
+  .upcoming-events__loading {
+    display: none;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1.5rem 0;
+    color: var(--color-ink-soft);
+  }
+
+  .upcoming-events__loading.is-active {
+    display: flex;
+  }
+
+  .upcoming-events__spinner {
+    width: 1.15rem;
+    height: 1.15rem;
+    border: 2px solid rgba(7, 140, 140, 0.2);
+    border-top-color: var(--color-teal);
+    border-radius: 50%;
+    animation: upcoming-spin 0.7s linear infinite;
+  }
+
+  @keyframes upcoming-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .upcoming-events__list {
+    display: grid;
+    gap: 0.75rem;
+    max-height: 36rem;
+    overflow-y: auto;
+    padding-right: 0.25rem;
+  }
+
+  .upcoming-events__list :global(.upcoming-events__card) {
+    display: grid;
+    gap: 0.35rem;
+    padding: 1rem 1.15rem;
+    border-radius: 1rem;
+    background: rgba(255, 255, 255, 0.78);
+    border: 1px solid rgba(7, 140, 140, 0.14);
+    cursor: pointer;
+    transition:
+      border-color 0.25s var(--ease-out),
+      box-shadow 0.25s var(--ease-out),
+      transform 0.25s var(--ease-out);
+  }
+
+  .upcoming-events__list :global(.upcoming-events__card:hover),
+  .upcoming-events__list :global(.upcoming-events__card:focus-visible) {
+    border-color: rgba(7, 140, 140, 0.35);
+    box-shadow: var(--shadow-soft);
+    transform: translateY(-1px);
+    outline: none;
+  }
+
+  .upcoming-events__list :global(.upcoming-events__card-header) {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.35rem 1rem;
+  }
+
+  .upcoming-events__list :global(.upcoming-events__card-title) {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    color: var(--color-ink);
+  }
+
+  .upcoming-events__list :global(.upcoming-events__card-date) {
+    color: var(--color-teal);
+    font-size: 0.92rem;
+    white-space: nowrap;
+  }
+
+  .upcoming-events__list :global(.upcoming-events__card-time) {
+    color: var(--color-ink-soft);
+    font-size: 0.95rem;
+  }
+
+  .upcoming-events__list :global(.upcoming-events__card-location) {
+    color: var(--color-ink-soft);
+    font-size: 0.95rem;
+  }
+
+  .upcoming-events__list :global(.upcoming-events__location-link) {
+    text-decoration: none;
+  }
+
+  .upcoming-events__list :global(.upcoming-events__location-link:hover) {
+    text-decoration: underline;
+  }
+
+  .upcoming-events__list :global(.upcoming-events__empty) {
+    padding: 1.5rem 1.15rem;
+    border-radius: 1rem;
+    background: rgba(255, 255, 255, 0.78);
+    border: 1px solid rgba(7, 140, 140, 0.14);
+    color: var(--color-ink-soft);
+  }
+
+  .upcoming-events__list :global(.upcoming-events__empty p) {
+    margin-bottom: 1rem;
+  }
+
+  .upcoming-events__modal {
+    max-width: min(32rem, calc(100vw - 2rem));
+    padding: 0;
+    border: 0;
+    border-radius: 1rem;
+    background: transparent;
+  }
+
+  .upcoming-events__modal::backdrop {
+    background: rgba(28, 28, 28, 0.45);
+  }
+
+  .upcoming-events__modal-panel {
+    position: relative;
+    padding: 1.5rem 1.35rem 1.35rem;
+    border-radius: 1rem;
+    background: var(--color-white);
+    border: 1px solid rgba(7, 140, 140, 0.18);
+    box-shadow: var(--shadow-soft);
+  }
+
+  .upcoming-events__modal-close {
+    position: absolute;
+    top: 0.65rem;
+    right: 0.75rem;
+    width: 2rem;
+    height: 2rem;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--color-ink-soft);
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  .upcoming-events__modal-close:hover {
+    color: var(--color-ink);
+    background: rgba(7, 140, 140, 0.08);
+  }
+
+  .upcoming-events__modal-title {
+    margin: 0 2rem 0.75rem 0;
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    color: var(--color-ink);
+  }
+
+  .upcoming-events__modal-meta {
+    margin: 0 0 0.4rem;
+    color: var(--color-teal);
+    font-size: 0.95rem;
+  }
+
+  .upcoming-events__modal-body {
+    margin-top: 1rem;
+    color: var(--color-ink-soft);
+  }
+
+  .upcoming-events__modal-body :global(p:last-child) {
+    margin-bottom: 0;
+  }
+
+  @media (max-width: 640px) {
+    .upcoming-events__actions {
+      width: 100%;
+    }
+
+    .upcoming-events__actions :global(.btn) {
+      flex: 1 1 auto;
+    }
+  }
+</style>

@@ -3,7 +3,7 @@ import { defineConfig } from 'astro/config';
 
 // https://astro.build/config
 export default defineConfig({
-  site: 'https://www.unityfusiondance.com',
+  site: 'https://unityfusiondance.com',
   trailingSlash: 'always',
   build: {
     format: 'directory',

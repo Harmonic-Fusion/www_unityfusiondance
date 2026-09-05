@@ -33,6 +33,11 @@ jobs:
       - name: Build
         run: npm run build
 
+      # Deploying without CNAME clears the custom domain in Pages settings.
+      - name: Verify custom domain
+        run: |
+          test "$(cat dist/CNAME)" = "unityfusiondance.com"
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:

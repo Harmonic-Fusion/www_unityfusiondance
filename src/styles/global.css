@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 :root {
   --color-teal: #078c8c;
   --color-teal-deep: #056868;

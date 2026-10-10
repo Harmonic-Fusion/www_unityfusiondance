@@ -401,12 +401,12 @@ async function fetchICalData(calendarId: string): Promise<string> {
   throw new Error('Unable to load calendar feed. The calendar may need to be public.');
 }
 
-function createMapsUrl(location: string): string | null {
+export function createMapsUrl(location: string): string | null {
   if (!location || location === 'Location TBD') return null;
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`;
 }
 
-function formatEventDate(date: Date): string {
+export function formatEventDate(date: Date): string {
   return date.toLocaleDateString('en-US', {
     weekday: 'short',
     year: 'numeric',
@@ -416,7 +416,7 @@ function formatEventDate(date: Date): string {
   });
 }
 
-function formatEventTime(start: Date, end: Date | null): string {
+export function formatEventTime(start: Date, end: Date | null): string {
   const timeOptions: Intl.DateTimeFormatOptions = {
     hour: 'numeric',
     minute: '2-digit',
@@ -430,7 +430,7 @@ function formatEventTime(start: Date, end: Date | null): string {
   return startTime;
 }
 
-function cleanDescriptionHTML(html: string): string {
+export function cleanDescriptionHTML(html: string): string {
   if (!html) return '';
 
   let decoded = decodeICalText(html);
@@ -482,7 +482,7 @@ function cleanDescriptionHTML(html: string): string {
     .replace(/<br\s*\/?>\s*<br\s*\/?>/g, '<br>');
 }
 
-function createEventCard(event: CalendarEvent): string {
+export function createEventCard(event: CalendarEvent): string {
   const dateStr = event.start ? formatEventDate(event.start) : '';
   const timeStr = event.start ? formatEventTime(event.start, event.end) : '';
   const locationStr = decodeICalText(event.location) || 'Location TBD';
@@ -503,6 +503,7 @@ function createEventCard(event: CalendarEvent): string {
   `;
 }
 
+// Deprecated - use initUpcomingEventsWithFilters from upcoming-events-filters instead
 export function initUpcomingEvents(root: HTMLElement): void {
   const calendarId = root.dataset.calendarId;
   const daysAhead = Number(root.dataset.daysAhead || 90);

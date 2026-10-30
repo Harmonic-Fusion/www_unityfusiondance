@@ -1,0 +1,57 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { links } from '../content/links';
+---
+
+<BaseLayout
+  title="You're subscribed"
+  description="Thanks for subscribing to the Unity Fusion mailing list. You're on the list!"
+>
+  <section class="section subscribe">
+    <div class="container subscribe__panel">
+      <img
+        src="/assets/images/logo-transparent.png"
+        alt=""
+        width="120"
+        height="120"
+        class="subscribe__logo"
+      />
+      <p class="section__eyebrow">Mailing list</p>
+      <h1 class="section__title">You're subscribed!</h1>
+      <p class="section__lead">
+        Thanks for joining the Unity Fusion mailing list. You'll get updates on
+        gatherings, workshops, and community news in Eugene. See you on the floor.
+      </p>
+      <div class="btn-row">
+        <a class="btn" href="/" rel="noopener noreferrer">Back to home</a>
+        <a class="btn btn--ghost" href={links.eventsCalendarView} target="_blank" rel="noopener noreferrer">
+          Check the events calendar
+        </a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .subscribe {
+    min-height: calc(100svh - var(--header-h) - 14rem);
+    display: grid;
+    align-items: center;
+  }
+
+  .subscribe__panel {
+    max-width: 36rem;
+    text-align: center;
+    animation: fade-up 0.8s var(--ease-out) both;
+  }
+
+  .subscribe__logo {
+    width: 6rem;
+    height: auto;
+    margin: 0 auto 1rem;
+  }
+
+  .subscribe .section__lead {
+    margin-inline: auto;
+  }
+</style>

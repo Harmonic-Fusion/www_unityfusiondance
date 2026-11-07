@@ -24,7 +24,7 @@ import { links } from '../content/links';
       </p>
       <div class="btn-row">
         <a class="btn" href="/" rel="noopener noreferrer">Back to home</a>
-        <a class="btn btn--ghost" href={links.eventsCalendarView} target="_blank" rel="noopener noreferrer">
+        <a class="btn btn--ghost subscribe__calendar-btn" href={links.eventsCalendarView} target="_blank" rel="noopener noreferrer">
           Check the events calendar
         </a>
       </div>
@@ -53,5 +53,15 @@ import { links } from '../content/links';
 
   .subscribe .section__lead {
     margin-inline: auto;
+  }
+
+  .subscribe__calendar-btn {
+    color: var(--color-ink);
+    border-color: var(--color-ink);
+  }
+
+  .subscribe__calendar-btn:hover {
+    background: var(--color-ink);
+    color: var(--color-white);
   }
 </style>

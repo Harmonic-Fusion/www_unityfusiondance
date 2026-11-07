@@ -41,6 +41,8 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build
+        env:
+          PUBLIC_GOOGLE_CALENDAR_API_KEY: ${{ secrets.PUBLIC_GOOGLE_CALENDAR_API_KEY }}
         run: pnpm build
 
       # Deploying without CNAME clears the custom domain in Pages settings.

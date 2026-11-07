@@ -39,7 +39,6 @@ export const links = {
 export const nav = [
   { href: '/', label: 'Home' },
   { href: '/events/', label: 'Events' },
-  { href: '/past-events/', label: 'Past Events' },
   { href: '/amazing/', label: 'Amazing Weekender!' },
   { href: '/faq/', label: 'FAQ' },
   { href: '/get-involved/', label: 'Get Involved' },

@@ -355,9 +355,104 @@ function writeCachedICal(calendarId: string, data: string): void {
   }
 }
 
-async function tryFetchICalOnce(calendarUrl: string): Promise<string | null> {
-  // Direct fetch first. Public Google calendars serve this endpoint with CORS
-  // headers in most modern browsers, so it often works without a proxy.
+function toRFC3339(date: Date): string {
+  return date.toISOString();
+}
+
+type GoogleCalendarEvent = {
+  summary?: string;
+  description?: string;
+  location?: string;
+  start?: { dateTime?: string; date?: string };
+  end?: { dateTime?: string; date?: string };
+};
+
+type GoogleCalendarResponse = {
+  items?: GoogleCalendarEvent[];
+};
+
+function googleEventToICal(event: GoogleCalendarEvent): string | null {
+  const summary = event.summary || '';
+  if (!summary) return null;
+
+  const startDateTime = event.start?.dateTime ?? event.start?.date ?? '';
+  const endDateTime = event.end?.dateTime ?? event.end?.date ?? '';
+  if (!startDateTime) return null;
+
+  const formatDateTime = (value: string): string => {
+    if (value.includes('T')) {
+      // dateTime -> convert ISO-ish to iCal UTC/local
+      const d = new Date(value);
+      if (Number.isNaN(d.getTime())) return value.replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
+      const iso = d.toISOString();
+      return iso.replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
+    }
+    // all-day date
+    return value.replace(/-/g, '');
+  };
+
+  const formatICalValue = (value: string): string => {
+    return value.replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\n/g, '\\n');
+  };
+
+  let lines = [
+    'BEGIN:VEVENT',
+    `SUMMARY:${formatICalValue(summary)}`,
+    `DTSTART${startDateTime.includes('T') ? '' : ';VALUE=DATE'}:${formatDateTime(startDateTime)}`,
+  ];
+
+  if (endDateTime) {
+    lines.push(`DTEND${endDateTime.includes('T') ? '' : ';VALUE=DATE'}:${formatDateTime(endDateTime)}`);
+  }
+
+  if (event.description) {
+    lines.push(`DESCRIPTION:${formatICalValue(event.description)}`);
+  }
+  if (event.location) {
+    lines.push(`LOCATION:${formatICalValue(event.location)}`);
+  }
+
+  lines.push('END:VEVENT');
+  return lines.join('\r\n');
+}
+
+async function fetchGoogleCalendarEvents(calendarId: string): Promise<string | null> {
+  const apiKey = typeof import.meta.env !== 'undefined' ? (import.meta.env.PUBLIC_GOOGLE_CALENDAR_API_KEY as string | undefined) : undefined;
+  if (!apiKey) return null;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const timeMin = toRFC3339(today);
+  // Ask for 250 future events max. Public calendars rarely have that many future
+  // events, so this keeps the response small without needing pagination.
+  const maxResults = 250;
+  const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?key=${encodeURIComponent(apiKey)}&timeMin=${encodeURIComponent(timeMin)}&maxResults=${maxResults}&singleEvents=true&orderBy=startTime`;
+
+  try {
+    const response = await fetchWithTimeout(url);
+    if (!response?.ok) return null;
+    const data: unknown = await response.json();
+    if (typeof data !== 'object' || !data) return null;
+    const items = (data as GoogleCalendarResponse).items ?? [];
+    const events = items
+      .map((event) => googleEventToICal(event))
+      .filter((event): event is string => event !== null);
+
+    if (events.length === 0) return null;
+    return `BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Unity Fusion//Google Calendar API//EN\r\n${events.join('\r\n')}\r\nEND:VCALENDAR`;
+  } catch {
+    return null;
+  }
+}
+
+async function tryFetchICalOnce(calendarUrl: string, calendarId: string): Promise<string | null> {
+  // Prefer Google Calendar API when a key is configured: it supports CORS,
+  // referrer restriction, and server-side date filtering.
+  const googleData = await fetchGoogleCalendarEvents(calendarId);
+  if (googleData) return googleData;
+
+  // Fallback: direct iCal fetch. Public Google calendars sometimes serve CORS
+  // headers for this endpoint, but many browsers block it.
   try {
     const directResponse = await fetchWithTimeout(calendarUrl);
     if (directResponse?.ok) {
@@ -429,7 +524,7 @@ export async function fetchICalData(calendarId: string): Promise<string> {
   const calendarUrl = `https://calendar.google.com/calendar/ical/${encodeURIComponent(calendarId)}/public/basic.ics`;
 
   for (let round = 0; round < FETCH_ROUNDS; round++) {
-    const data = await tryFetchICalOnce(calendarUrl);
+    const data = await tryFetchICalOnce(calendarUrl, calendarId);
     if (data) {
       writeCachedICal(calendarId, data);
       return data;

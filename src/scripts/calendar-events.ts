@@ -445,86 +445,9 @@ async function fetchGoogleCalendarEvents(calendarId: string): Promise<string | n
   }
 }
 
-async function tryFetchICalOnce(calendarUrl: string, calendarId: string): Promise<string | null> {
-  // Prefer Google Calendar API when a key is configured: it supports CORS,
-  // referrer restriction, and server-side date filtering.
-  const googleData = await fetchGoogleCalendarEvents(calendarId);
-  if (googleData) return googleData;
-
-  // Fallback: direct iCal fetch. Public Google calendars sometimes serve CORS
-  // headers for this endpoint, but many browsers block it.
-  try {
-    const directResponse = await fetchWithTimeout(calendarUrl);
-    if (directResponse?.ok) {
-      const text = await directResponse.text();
-      if (isICalText(text)) return text;
-    }
-  } catch {
-    // Fall through to proxies
-  }
-
-  // Anonymous CORS proxies change terms or break over time. Try a small list and
-  // bail gracefully if one misbehaves (e.g. returns JSON errors or HTML).
-  const proxies: {
-    name: string;
-    url: string;
-    parse: (data: unknown) => string | null;
-  }[] = [
-    {
-      name: 'allorigins.win (raw)',
-      url: `https://api.allorigins.win/raw?url=${encodeURIComponent(calendarUrl)}`,
-      parse: (data) => (typeof data === 'string' ? data : null),
-    },
-    {
-      name: 'allorigins.win (json)',
-      url: `https://api.allorigins.win/get?url=${encodeURIComponent(calendarUrl)}`,
-      parse: (data) => {
-        if (typeof data !== 'object' || !data || !('contents' in data)) return null;
-        let contents = String((data as { contents: string }).contents);
-        if (contents.startsWith('data:')) {
-          const base64Match = contents.match(/base64,(.+)$/);
-          if (!base64Match?.[1]) return null;
-          const decoded = safeAtob(base64Match[1]);
-          if (!decoded) return null;
-          contents = decoded;
-        }
-        return contents;
-      },
-    },
-    {
-      name: 'codetabs',
-      url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(calendarUrl)}`,
-      parse: (data) => (typeof data === 'string' ? data : null),
-    },
-  ];
-
-  for (const proxy of proxies) {
-    try {
-      const response = await fetchWithTimeout(proxy.url);
-      if (!response?.ok) continue;
-
-      let proxyData: unknown;
-      try {
-        proxyData = await response.json();
-      } catch {
-        proxyData = await response.text();
-      }
-
-      const icalData = proxy.parse(proxyData);
-      if (isICalText(icalData)) return icalData;
-    } catch {
-      continue;
-    }
-  }
-
-  return null;
-}
-
 export async function fetchICalData(calendarId: string): Promise<string> {
-  const calendarUrl = `https://calendar.google.com/calendar/ical/${encodeURIComponent(calendarId)}/public/basic.ics`;
-
   for (let round = 0; round < FETCH_ROUNDS; round++) {
-    const data = await tryFetchICalOnce(calendarUrl, calendarId);
+    const data = await fetchGoogleCalendarEvents(calendarId);
     if (data) {
       writeCachedICal(calendarId, data);
       return data;
@@ -537,7 +460,7 @@ export async function fetchICalData(calendarId: string): Promise<string> {
   const cached = readCachedICal(calendarId);
   if (cached) return cached;
 
-  throw new Error('Unable to load calendar feed. The calendar may need to be public.');
+  throw new Error('Unable to load calendar feed. The API key may be missing or the calendar may not be public.');
 }
 
 export function createMapsUrl(location: string): string | null {

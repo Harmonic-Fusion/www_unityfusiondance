@@ -199,134 +199,110 @@ function parseRRULE(rruleString: string): RRule | null {
   const rrule: RRule = { freq: '' };
   for (const part of rruleString.split(';')) {
     const [key, value] = part.split('=');
-    if (!key || !value) continue;
-    const upperKey = key.toUpperCase();
-    if (upperKey === 'FREQ') rrule.freq = value.toUpperCase();
-    else if (upperKey === 'INTERVAL') rrule.interval = parseInt(value, 10) || 1;
-    else if (upperKey === 'COUNT') rrule.count = parseInt(value, 10);
-    else if (upperKey === 'UNTIL') rrule.until = parseICalDate(value);
-    else if (upperKey === 'BYDAY') rrule.byday = value.split(',');
-  }
-  return rrule.freq ? rrule : null;
-}
-
-function parseBydays(byday: string[]): number[] {
-  return byday
-    .map((d) => {
-      const match = d.match(/^(-?\d+)?([A-Z]+)$/i);
-      if (match) return DAY_MAP[match[2].toUpperCase()];
-      return DAY_MAP[d.toUpperCase()];
-    })
-    .filter((d): d is number => d !== undefined);
-}
-
-function expandRRULE(event: CalendarEvent, maxDate: Date): CalendarEvent[] {
-  if (!event.rrule || !event.start) return [];
-  const rrule = parseRRULE(event.rrule);
-  if (!rrule) return [];
-
-  const instances: CalendarEvent[] = [];
-  const startUTC = new Date(event.start);
-  let currentDateUTC = new Date(
-    Date.UTC(
-      startUTC.getUTCFullYear(),
-      startUTC.getUTCMonth(),
-      startUTC.getUTCDate(),
-      startUTC.getUTCHours(),
-      startUTC.getUTCMinutes(),
-      startUTC.getUTCSeconds(),
-    ),
-  );
-  const duration = event.end
-    ? event.end.getTime() - event.start.getTime()
-    : 60 * 60 * 1000;
-  let count = 0;
-  const maxInstances = 500;
-
-  if (rrule.freq === 'WEEKLY' && rrule.byday?.length) {
-    const targetDays = parseBydays(rrule.byday);
-    if (targetDays.length > 0 && !targetDays.includes(currentDateUTC.getUTCDay())) {
-      const originalHours = currentDateUTC.getUTCHours();
-      const originalMinutes = currentDateUTC.getUTCMinutes();
-      const originalSeconds = currentDateUTC.getUTCSeconds();
-      for (let i = 1; i <= 7; i++) {
-        const check = new Date(currentDateUTC);
-        check.setUTCDate(check.getUTCDate() + i);
-        if (targetDays.includes(check.getUTCDay())) {
-          check.setUTCHours(originalHours, originalMinutes, originalSeconds);
-          currentDateUTC = check;
-          break;
-        }
-      }
+    if (!key || value === undefined) continue;
+    switch (key.toUpperCase()) {
+      case 'FREQ':
+        rrule.freq = value;
+        break;
+      case 'INTERVAL':
+        rrule.interval = parseInt(value, 10) || 1;
+        break;
+      case 'COUNT':
+        rrule.count = parseInt(value, 10) || undefined;
+        break;
+      case 'UNTIL':
+        rrule.until = parseICalDate(value);
+        break;
+      case 'BYDAY':
+        rrule.byday = value.split(',');
+        break;
     }
   }
-
-  const maxDateUTC = new Date(maxDate.getTime());
-
-  while (currentDateUTC <= maxDateUTC && count < maxInstances) {
-    const instanceStart = new Date(currentDateUTC.getTime());
-    instances.push({
-      summary: event.summary,
-      description: event.description,
-      location: event.location,
-      start: instanceStart,
-      end: new Date(instanceStart.getTime() + duration),
-      rrule: null,
-    });
-    count++;
-
-    if (rrule.freq === 'WEEKLY') {
-      if (rrule.byday?.length) {
-        const targetDays = parseBydays(rrule.byday);
-        if (targetDays.length > 0) {
-          let daysToAdd = 1;
-          let found = false;
-          for (let i = 1; i <= 14; i++) {
-            const check = new Date(currentDateUTC);
-            check.setUTCDate(check.getUTCDate() + i);
-            if (targetDays.includes(check.getUTCDay())) {
-              daysToAdd = i;
-              found = true;
-              break;
-            }
-          }
-          currentDateUTC = new Date(currentDateUTC);
-          currentDateUTC.setUTCDate(
-            currentDateUTC.getUTCDate() + (found ? daysToAdd : (rrule.interval || 1) * 7),
-          );
-        } else {
-          currentDateUTC = new Date(currentDateUTC);
-          currentDateUTC.setUTCDate(currentDateUTC.getUTCDate() + (rrule.interval || 1) * 7);
-        }
-      } else {
-        currentDateUTC = new Date(currentDateUTC);
-        currentDateUTC.setUTCDate(currentDateUTC.getUTCDate() + (rrule.interval || 1) * 7);
-      }
-    } else if (rrule.freq === 'DAILY') {
-      currentDateUTC = new Date(currentDateUTC);
-      currentDateUTC.setUTCDate(currentDateUTC.getUTCDate() + (rrule.interval || 1));
-    } else if (rrule.freq === 'MONTHLY') {
-      currentDateUTC = new Date(currentDateUTC);
-      currentDateUTC.setUTCMonth(currentDateUTC.getUTCMonth() + (rrule.interval || 1));
-    } else if (rrule.freq === 'YEARLY') {
-      currentDateUTC = new Date(currentDateUTC);
-      currentDateUTC.setUTCFullYear(currentDateUTC.getUTCFullYear() + (rrule.interval || 1));
-    } else {
-      break;
-    }
-
-    if (rrule.count && count >= rrule.count) break;
-    if (rrule.until && currentDateUTC > new Date(rrule.until)) break;
-  }
-
-  return instances;
+  if (!rrule.freq) return null;
+  return rrule;
 }
 
-function expandRecurringEvents(events: CalendarEvent[], maxDate: Date): CalendarEvent[] {
+function getWeekdayOffset(dayCode: string): number {
+  return DAY_MAP[dayCode.toUpperCase()] ?? -1;
+}
+
+function addDays(date: Date, days: number): Date {
+  const result = new Date(date);
+  result.setDate(result.getDate() + days);
+  return result;
+}
+
+function addMonths(date: Date, months: number): Date {
+  const result = new Date(date);
+  result.setMonth(result.getMonth() + months);
+  return result;
+}
+
+function getNextWeekday(startDate: Date, targetDay: number): Date {
+  const startDay = startDate.getDay();
+  let diff = targetDay - startDay;
+  if (diff <= 0) diff += 7;
+  return addDays(startDate, diff);
+}
+
+function expandRecurringEvents(events: CalendarEvent[], limitDate: Date): CalendarEvent[] {
   const expanded: CalendarEvent[] = [];
   for (const event of events) {
-    if (event.rrule && event.start) {
-      expanded.push(...expandRRULE(event, maxDate));
+    if (!event.start) continue;
+    if (event.rrule) {
+      const rrule = parseRRULE(event.rrule);
+      if (!rrule) {
+        expanded.push(event);
+        continue;
+      }
+
+      const duration = event.end
+        ? event.end.getTime() - event.start.getTime()
+        : 60 * 60 * 1000;
+      const originalStart = new Date(event.start.getTime());
+      let count = rrule.count ?? 100;
+      let current = new Date(originalStart.getTime());
+      const until = rrule.until || limitDate;
+
+      while (count > 0 && current <= until && current <= limitDate) {
+        if (rrule.byday && rrule.byday.length > 0) {
+          for (const dayCode of rrule.byday) {
+            const targetDay = getWeekdayOffset(dayCode);
+            if (targetDay === -1) continue;
+            const occurrence = getNextWeekday(current, targetDay);
+            if (occurrence >= originalStart && occurrence <= until && occurrence <= limitDate) {
+              expanded.push({
+                ...event,
+                start: new Date(occurrence.getTime()),
+                end: new Date(occurrence.getTime() + duration),
+              });
+              count--;
+              if (count <= 0) break;
+            }
+          }
+        } else {
+          expanded.push({
+            ...event,
+            start: new Date(current.getTime()),
+            end: new Date(current.getTime() + duration),
+          });
+          count--;
+        }
+
+        switch (rrule.freq.toUpperCase()) {
+          case 'DAILY':
+            current = addDays(current, rrule.interval || 1);
+            break;
+          case 'WEEKLY':
+            current = addDays(current, 7 * (rrule.interval || 1));
+            break;
+          case 'MONTHLY':
+            current = addMonths(current, rrule.interval || 1);
+            break;
+          default:
+            current = addDays(current, 7);
+        }
+      }
     } else {
       expanded.push(event);
     }
@@ -340,6 +316,17 @@ const CACHE_PREFIX = 'upcoming-events-ical:';
 
 function isICalText(data: string | null | undefined): data is string {
   return typeof data === 'string' && data.includes('BEGIN:VCALENDAR');
+}
+
+function safeAtob(value: string): string | null {
+  if (typeof atob === 'function') {
+    try {
+      return atob(value);
+    } catch {
+      return null;
+    }
+  }
+  return null;
 }
 
 async function fetchWithTimeout(url: string, init: RequestInit = {}): Promise<Response> {
@@ -369,67 +356,73 @@ function writeCachedICal(calendarId: string, data: string): void {
 }
 
 async function tryFetchICalOnce(calendarUrl: string): Promise<string | null> {
-  const sources: { url: string; parse: (response: Response) => Promise<string | null> }[] = [
-    { url: calendarUrl, parse: (response) => response.text() },
+  // Direct fetch first. Public Google calendars serve this endpoint with CORS
+  // headers in most modern browsers, so it often works without a proxy.
+  try {
+    const directResponse = await fetchWithTimeout(calendarUrl);
+    if (directResponse?.ok) {
+      const text = await directResponse.text();
+      if (isICalText(text)) return text;
+    }
+  } catch {
+    // Fall through to proxies
+  }
+
+  // Anonymous CORS proxies change terms or break over time. Try a small list and
+  // bail gracefully if one misbehaves (e.g. returns JSON errors or HTML).
+  const proxies: {
+    name: string;
+    url: string;
+    parse: (data: unknown) => string | null;
+  }[] = [
     {
+      name: 'allorigins.win (raw)',
       url: `https://api.allorigins.win/raw?url=${encodeURIComponent(calendarUrl)}`,
-      parse: (response) => response.text(),
+      parse: (data) => (typeof data === 'string' ? data : null),
     },
     {
+      name: 'allorigins.win (json)',
       url: `https://api.allorigins.win/get?url=${encodeURIComponent(calendarUrl)}`,
-      parse: async (response) => {
-        const data: unknown = await response.json();
+      parse: (data) => {
         if (typeof data !== 'object' || !data || !('contents' in data)) return null;
         let contents = String((data as { contents: string }).contents);
         if (contents.startsWith('data:')) {
           const base64Match = contents.match(/base64,(.+)$/);
           if (!base64Match?.[1]) return null;
-          contents = atob(base64Match[1]);
+          const decoded = safeAtob(base64Match[1]);
+          if (!decoded) return null;
+          contents = decoded;
         }
         return contents;
       },
     },
     {
-      url: `https://corsproxy.io/?${encodeURIComponent(calendarUrl)}`,
-      parse: (response) => response.text(),
-    },
-    {
+      name: 'codetabs',
       url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(calendarUrl)}`,
-      parse: (response) => response.text(),
+      parse: (data) => (typeof data === 'string' ? data : null),
     },
   ];
 
-  // Race all sources so one slow or blocked source does not delay the first load
-  return new Promise((resolve) => {
-    let pending = sources.length;
-    let settled = false;
-    const finish = (value: string | null) => {
-      if (settled) return;
-      if (value) {
-        settled = true;
-        resolve(value);
-        return;
-      }
-      pending -= 1;
-      if (pending === 0) {
-        settled = true;
-        resolve(null);
-      }
-    };
+  for (const proxy of proxies) {
+    try {
+      const response = await fetchWithTimeout(proxy.url);
+      if (!response?.ok) continue;
 
-    for (const source of sources) {
-      void (async () => {
-        try {
-          const response = await fetchWithTimeout(source.url);
-          if (!response.ok) return finish(null);
-          const data = await source.parse(response);
-          finish(isICalText(data) ? data : null);
-        } catch {
-          finish(null);
-        }
-      })();
+      let proxyData: unknown;
+      try {
+        proxyData = await response.json();
+      } catch {
+        proxyData = await response.text();
+      }
+
+      const icalData = proxy.parse(proxyData);
+      if (isICalText(icalData)) return icalData;
+    } catch {
+      continue;
     }
-  });
+  }
+
+  return null;
 }
 
 export async function fetchICalData(calendarId: string): Promise<string> {
@@ -519,34 +512,30 @@ export function cleanDescriptionHTML(html: string): string {
     text = text
       .replace(/\\,/g, ',')
       .replace(/\\;/g, ';')
-      .replace(/\\n/g, ' ')
-      .replace(/\\N/g, ' ')
       .replace(/\\\\/g, '\\')
-      .replace(/Â/g, '')
-      .replace(/\s{2,}/g, ' ');
+      .replace(/\\[nN]/g, '\n');
     node.textContent = text;
   }
 
-  return tempDiv.innerHTML
-    .replace(/<p[^>]*>\s*<\/p>/g, '')
-    .replace(/<!--[^>]*-->/g, '')
-    .replace(/<br\s*\/?>\s*<br\s*\/?>/g, '<br>');
+  return tempDiv.innerHTML;
 }
 
 export function createEventCard(event: CalendarEvent): string {
-  const dateStr = event.start ? formatEventDate(event.start) : '';
-  const timeStr = event.start ? formatEventTime(event.start, event.end) : '';
+  const title = escapeHtml(event.summary || 'Untitled Event');
+  const timeStr = event.start
+    ? `${formatEventTime(event.start, event.end)} (${formatEventDate(event.start)})`
+    : 'Date TBD';
   const locationStr = decodeICalText(event.location) || 'Location TBD';
   const mapsUrl = createMapsUrl(locationStr);
   const locationHtml = mapsUrl
-    ? `<a href="${mapsUrl}" target="_blank" rel="noopener noreferrer" class="upcoming-events__location-link">${escapeHtml(locationStr)}</a>`
+    ? `<a class="upcoming-events__location-link" href="${mapsUrl}" target="_blank" rel="noopener noreferrer">${escapeHtml(locationStr)}</a>`
     : escapeHtml(locationStr);
 
   return `
-    <article class="upcoming-events__card" role="button" tabindex="0">
+    <article class="upcoming-events__card" tabindex="0" role="button" aria-label="${title} — ${timeStr}">
       <div class="upcoming-events__card-header">
-        <h3 class="upcoming-events__card-title">${escapeHtml(event.summary || 'Untitled Event')}</h3>
-        <span class="upcoming-events__card-date">${escapeHtml(dateStr)}</span>
+        <h3 class="upcoming-events__card-title">${title}</h3>
+        <div class="upcoming-events__card-date">${escapeHtml(formatEventDate(event.start || new Date()))}</div>
       </div>
       <div class="upcoming-events__card-time">${escapeHtml(timeStr)}</div>
       <div class="upcoming-events__card-location">${locationHtml}</div>

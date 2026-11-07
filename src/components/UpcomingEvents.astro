@@ -649,6 +649,32 @@ const {
   }
 
   /* Mobile: Toolbar collapses to top bar with search + filter toggle side by side */
+  /* Debug panel */
+  .upcoming-events__debug {
+    width: 100%;
+    margin-top: 0.75rem;
+    padding: 0.75rem 1rem;
+    border: 1px dashed rgba(7, 140, 140, 0.35);
+    border-radius: 0.75rem;
+    background: rgba(7, 140, 140, 0.06);
+    color: var(--color-ink);
+    font-size: 0.85rem;
+  }
+
+  .upcoming-events__debug summary {
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .upcoming-events__debug ul {
+    margin: 0.5rem 0 0;
+    padding-left: 1.1rem;
+  }
+
+  .upcoming-events__debug li {
+    margin-bottom: 0.25rem;
+  }
+
   @media (max-width: 640px) {
     .upcoming-events__header {
       flex-direction: column;

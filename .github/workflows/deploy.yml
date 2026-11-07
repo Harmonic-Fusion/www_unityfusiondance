@@ -17,6 +17,7 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    environment: github-pages
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -39,6 +40,16 @@ jobs:
 
       - name: Install
         run: pnpm install --frozen-lockfile
+
+      - name: Verify calendar API key is present
+        env:
+          PUBLIC_GOOGLE_CALENDAR_API_KEY: ${{ secrets.PUBLIC_GOOGLE_CALENDAR_API_KEY }}
+        run: |
+          if [ -z "$PUBLIC_GOOGLE_CALENDAR_API_KEY" ]; then
+            echo 'PUBLIC_GOOGLE_CALENDAR_API_KEY is not set. Add it to the github-pages environment secrets.'
+            exit 1
+          fi
+          echo 'PUBLIC_GOOGLE_CALENDAR_API_KEY is set.'
 
       - name: Build
         env:

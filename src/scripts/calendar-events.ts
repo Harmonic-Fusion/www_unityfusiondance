@@ -26,6 +26,36 @@ const DAY_MAP: Record<string, number> = {
   SA: 6,
 };
 
+function isDebugMode(): boolean {
+  if (typeof window === 'undefined') return false;
+  const params = new URLSearchParams(window.location.search);
+  return params.get('debug')?.toLowerCase() === 'true';
+}
+
+function debug(...args: unknown[]): void {
+  if (isDebugMode()) {
+    console.log('[calendar-events debug]', ...args);
+  }
+}
+
+function info(...args: unknown[]): void {
+  console.log('[calendar-events]', ...args);
+}
+
+function warn(...args: unknown[]): void {
+  console.warn('[calendar-events]', ...args);
+}
+
+function error(...args: unknown[]): void {
+  console.error('[calendar-events]', ...args);
+}
+
+function maskKey(value: string | undefined): string {
+  if (!value) return '(not set)';
+  if (value.length <= 8) return '*'.repeat(value.length);
+  return value.slice(0, 4) + '...' + value.slice(-4);
+}
+
 function escapeHtml(text: string): string {
   const div = document.createElement('div');
   div.textContent = text;
@@ -314,21 +344,6 @@ const FETCH_TIMEOUT_MS = 8000;
 const FETCH_ROUNDS = 3;
 const CACHE_PREFIX = 'upcoming-events-ical:';
 
-function isICalText(data: string | null | undefined): data is string {
-  return typeof data === 'string' && data.includes('BEGIN:VCALENDAR');
-}
-
-function safeAtob(value: string): string | null {
-  if (typeof atob === 'function') {
-    try {
-      return atob(value);
-    } catch {
-      return null;
-    }
-  }
-  return null;
-}
-
 async function fetchWithTimeout(url: string, init: RequestInit = {}): Promise<Response> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
@@ -381,13 +396,11 @@ function googleEventToICal(event: GoogleCalendarEvent): string | null {
 
   const formatDateTime = (value: string): string => {
     if (value.includes('T')) {
-      // dateTime -> convert ISO-ish to iCal UTC/local
       const d = new Date(value);
       if (Number.isNaN(d.getTime())) return value.replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
       const iso = d.toISOString();
       return iso.replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
     }
-    // all-day date
     return value.replace(/-/g, '');
   };
 
@@ -395,7 +408,7 @@ function googleEventToICal(event: GoogleCalendarEvent): string | null {
     return value.replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\n/g, '\\n');
   };
 
-  let lines = [
+  const lines: string[] = [
     'BEGIN:VEVENT',
     `SUMMARY:${formatICalValue(summary)}`,
     `DTSTART${startDateTime.includes('T') ? '' : ';VALUE=DATE'}:${formatDateTime(startDateTime)}`,
@@ -417,30 +430,57 @@ function googleEventToICal(event: GoogleCalendarEvent): string | null {
 }
 
 async function fetchGoogleCalendarEvents(calendarId: string): Promise<string | null> {
-  const apiKey = typeof import.meta.env !== 'undefined' ? (import.meta.env.PUBLIC_GOOGLE_CALENDAR_API_KEY as string | undefined) : undefined;
-  if (!apiKey) return null;
+  const apiKey: string | undefined = import.meta.env.PUBLIC_GOOGLE_CALENDAR_API_KEY;
+
+  info('PUBLIC_GOOGLE_CALENDAR_API_KEY is', apiKey ? `set (${maskKey(apiKey)})` : 'NOT SET');
+  debug('Full calendar ID:', calendarId);
+
+  if (!apiKey) {
+    error('Calendar cannot load: PUBLIC_GOOGLE_CALENDAR_API_KEY is missing.');
+    return null;
+  }
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const timeMin = toRFC3339(today);
-  // Ask for 250 future events max. Public calendars rarely have that many future
-  // events, so this keeps the response small without needing pagination.
   const maxResults = 250;
   const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?key=${encodeURIComponent(apiKey)}&timeMin=${encodeURIComponent(timeMin)}&maxResults=${maxResults}&singleEvents=true&orderBy=startTime`;
 
+  debug('Request URL (key masked):', url.replace(apiKey, '***'));
+
   try {
+    info('Fetching Google Calendar API…');
     const response = await fetchWithTimeout(url);
-    if (!response?.ok) return null;
+    if (!response?.ok) {
+      error('Google Calendar API request failed:', response?.status, response?.statusText);
+      return null;
+    }
     const data: unknown = await response.json();
-    if (typeof data !== 'object' || !data) return null;
+    if (typeof data !== 'object' || !data) {
+      error('Google Calendar API returned invalid JSON');
+      return null;
+    }
     const items = (data as GoogleCalendarResponse).items ?? [];
+    if (!Array.isArray(items)) {
+      error('Google Calendar API response missing items array');
+      return null;
+    }
+    debug('Raw API items count:', items.length);
+
     const events = items
       .map((event) => googleEventToICal(event))
       .filter((event): event is string => event !== null);
 
-    if (events.length === 0) return null;
+    debug('Parsed iCal events count:', events.length);
+
+    if (events.length === 0) {
+      warn('Google Calendar API returned no future events');
+      return null;
+    }
+    info('Loaded', events.length, 'future events from Google Calendar API');
     return `BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Unity Fusion//Google Calendar API//EN\r\n${events.join('\r\n')}\r\nEND:VCALENDAR`;
-  } catch {
+  } catch (err) {
+    error('Error fetching Google Calendar API:', err instanceof Error ? err.message : String(err));
     return null;
   }
 }
@@ -453,12 +493,16 @@ export async function fetchICalData(calendarId: string): Promise<string> {
       return data;
     }
     if (round < FETCH_ROUNDS - 1) {
+      warn(`Retry ${round + 1}/${FETCH_ROUNDS - 1} after failure`);
       await new Promise((resolve) => setTimeout(resolve, 600 * (round + 1)));
     }
   }
 
   const cached = readCachedICal(calendarId);
-  if (cached) return cached;
+  if (cached) {
+    info('Using cached calendar data from sessionStorage');
+    return cached;
+  }
 
   throw new Error('Unable to load calendar feed. The API key may be missing or the calendar may not be public.');
 }
@@ -496,7 +540,6 @@ export function cleanDescriptionHTML(html: string): string {
   if (!html) return '';
 
   let decoded = decodeICalText(html);
-  // Convert bare newlines to breaks when content is mostly plain text
   if (!/<[a-z][\s\S]*>/i.test(decoded)) {
     decoded = escapeHtml(decoded).replace(/\n/g, '<br />');
     return decoded;
@@ -561,7 +604,32 @@ export function createEventCard(event: CalendarEvent): string {
   `;
 }
 
-// Deprecated - use initUpcomingEventsWithFilters from upcoming-events-filters instead
+function renderDebugPanel(root: HTMLElement, allEvents: CalendarEvent[], filteredEvents: CalendarEvent[]): void {
+  if (!isDebugMode()) return;
+
+  const existing = root.querySelector('[data-calendar-debug]');
+  if (existing) existing.remove();
+
+  const panel = document.createElement('div');
+  panel.dataset.calendarDebug = '';
+  panel.className = 'upcoming-events__debug';
+  panel.innerHTML = `
+    <details open>
+      <summary>Calendar debug</summary>
+      <ul>
+        <li><strong>Calendar ID:</strong> ${escapeHtml(root.dataset.calendarId || '(none)')}</li>
+        <li><strong>API key:</strong> ${escapeHtml(maskKey(import.meta.env.PUBLIC_GOOGLE_CALENDAR_API_KEY))}</li>
+        <li><strong>Debug mode:</strong> on</li>
+        <li><strong>Total loaded events:</strong> ${allEvents.length}</li>
+        <li><strong>Filtered events:</strong> ${filteredEvents.length}</li>
+        <li><strong>URL:</strong> ${escapeHtml(window.location.href)}</li>
+      </ul>
+    </details>
+  `;
+
+  root.querySelector('[data-toolbar]')?.append(panel);
+}
+
 export function initUpcomingEvents(root: HTMLElement): void {
   const calendarId = root.dataset.calendarId;
   const daysAhead = Number(root.dataset.daysAhead || 90);
@@ -575,8 +643,11 @@ export function initUpcomingEvents(root: HTMLElement): void {
   const modalClose = root.querySelector<HTMLElement>('[data-modal-close]');
 
   if (!calendarId || !listEl || !modal || !modalTitle || !modalTime || !modalLocation || !modalDescription) {
+    error('Missing required calendar DOM elements');
     return;
   }
+
+  info('Initializing calendar for', calendarId, 'debug:', isDebugMode());
 
   let events: CalendarEvent[] = [];
 
@@ -657,15 +728,18 @@ export function initUpcomingEvents(root: HTMLElement): void {
 
       const parsed = parseICal(icalData);
       const expanded = expandRecurringEvents(parsed, endDate);
-      events = expanded
+      const allEvents = expanded
         .filter((event): event is CalendarEvent & { start: Date } => Boolean(event.start))
         .filter((event) => event.start >= today && event.start <= endDate)
         .sort((a, b) => a.start.getTime() - b.start.getTime());
 
+      events = allEvents;
       renderEvents();
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : 'Unable to load events. Please try again later.';
+      renderDebugPanel(root, allEvents, events);
+      debug('Rendered', events.length, 'events in date range', today.toISOString(), 'to', endDate.toISOString());
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unable to load events. Please try again later.';
+      error('Failed to load events:', message);
       showError(message);
     } finally {
       setLoading(false);

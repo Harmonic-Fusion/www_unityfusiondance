@@ -1,0 +1,98 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { links, nav } from '../content/links';
+
+const suggestions = nav.filter((item) => item.href !== '/');
+---
+
+<BaseLayout
+  title="Page not found"
+  description="That page isn't here. Find Unity Fusion events, the FAQ, and ways to get involved."
+>
+  <section class="section lost">
+    <div class="container lost__panel">
+      <img
+        src="/assets/images/logo-transparent.png"
+        alt=""
+        width="120"
+        height="120"
+        class="lost__logo"
+      />
+      <p class="section__eyebrow">404</p>
+      <h1 class="section__title">Missed a step</h1>
+      <p class="section__lead">
+        The page you're looking for isn't here. It may have moved, or the link
+        may be out of date. Let's get you back on the floor.
+      </p>
+      <div class="btn-row lost__actions">
+        <a class="btn" href="/">Back to home</a>
+        <a class="btn btn--ghost" href={links.eventsCalendarView} target="_blank" rel="noopener noreferrer">
+          See upcoming events
+        </a>
+      </div>
+      {suggestions.length > 0 && (
+        <nav class="lost__links" aria-label="Popular pages">
+          <p class="lost__links-label">Or try one of these</p>
+          <ul>
+            {suggestions.map((item) => (
+              <li><a href={item.href}>{item.label}</a></li>
+            ))}
+          </ul>
+        </nav>
+      )}
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .lost {
+    min-height: calc(100svh - var(--header-h) - 14rem);
+    display: grid;
+    align-items: center;
+  }
+
+  .lost__panel {
+    max-width: 36rem;
+    text-align: center;
+    animation: fade-up 0.8s var(--ease-out) both;
+  }
+
+  .lost__logo {
+    width: 6rem;
+    height: auto;
+    margin: 0 auto 1rem;
+  }
+
+  .lost .section__lead {
+    margin-inline: auto;
+  }
+
+  .lost__actions {
+    justify-content: center;
+  }
+
+  .lost__links {
+    margin-top: 2.5rem;
+  }
+
+  .lost__links-label {
+    font-size: 0.875rem;
+    opacity: 0.75;
+    margin-bottom: 0.75rem;
+  }
+
+  .lost__links ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem 1.25rem;
+  }
+
+  .lost__links a {
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
+</style>

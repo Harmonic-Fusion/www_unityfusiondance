@@ -426,7 +426,7 @@ function googleEventToICal(event: GoogleCalendarEvent): string | null {
 }
 
 async function fetchGoogleCalendarEvents(calendarId: string): Promise<string | null> {
-  const apiKey: *** | undefined = import.meta.env.PUBLIC_GOOGLE_CALENDAR_API_KEY;
+  const apiKey = import.meta.env.PUBLIC_GOOGLE_CALENDAR_API_KEY;
 
   debug('Calendar ID:', calendarId);
   debug('PUBLIC_GOOGLE_CALENDAR_API_KEY:', maskKey(apiKey));

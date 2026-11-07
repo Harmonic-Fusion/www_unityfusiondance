@@ -610,5 +610,7 @@ export function initUpcomingEventsWithFilters(root: HTMLElement): void {
 }
 
 document.querySelectorAll<HTMLElement>('[data-upcoming-events]').forEach((root) => {
+  if (root.dataset.calendarInitialized) return;
+  root.dataset.calendarInitialized = 'true';
   initUpcomingEventsWithFilters(root);
 });

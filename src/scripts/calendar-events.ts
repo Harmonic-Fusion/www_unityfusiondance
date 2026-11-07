@@ -38,10 +38,6 @@ function debug(...args: unknown[]): void {
   }
 }
 
-function info(...args: unknown[]): void {
-  console.log('[calendar-events]', ...args);
-}
-
 function warn(...args: unknown[]): void {
   console.warn('[calendar-events]', ...args);
 }
@@ -430,10 +426,10 @@ function googleEventToICal(event: GoogleCalendarEvent): string | null {
 }
 
 async function fetchGoogleCalendarEvents(calendarId: string): Promise<string | null> {
-  const apiKey: string | undefined = import.meta.env.PUBLIC_GOOGLE_CALENDAR_API_KEY;
+  const apiKey: *** | undefined = import.meta.env.PUBLIC_GOOGLE_CALENDAR_API_KEY;
 
-  info('PUBLIC_GOOGLE_CALENDAR_API_KEY is', apiKey ? `set (${maskKey(apiKey)})` : 'NOT SET');
-  debug('Full calendar ID:', calendarId);
+  debug('Calendar ID:', calendarId);
+  debug('PUBLIC_GOOGLE_CALENDAR_API_KEY:', maskKey(apiKey));
 
   if (!apiKey) {
     error('Calendar cannot load: PUBLIC_GOOGLE_CALENDAR_API_KEY is missing.');
@@ -444,12 +440,11 @@ async function fetchGoogleCalendarEvents(calendarId: string): Promise<string | n
   today.setHours(0, 0, 0, 0);
   const timeMin = toRFC3339(today);
   const maxResults = 250;
-  const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?key=${encodeURIComponent(apiKey)}&timeMin=${encodeURIComponent(timeMin)}&maxResults=${maxResults}&singleEvents=true&orderBy=startTime`;
+  const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?key=***)}&timeMin=${encodeURIComponent(timeMin)}&maxResults=${maxResults}&singleEvents=true&orderBy=startTime`;
 
   debug('Request URL (key masked):', url.replace(apiKey, '***'));
 
   try {
-    info('Fetching Google Calendar API…');
     const response = await fetchWithTimeout(url);
     if (!response?.ok) {
       error('Google Calendar API request failed:', response?.status, response?.statusText);
@@ -477,7 +472,7 @@ async function fetchGoogleCalendarEvents(calendarId: string): Promise<string | n
       warn('Google Calendar API returned no future events');
       return null;
     }
-    info('Loaded', events.length, 'future events from Google Calendar API');
+    debug('Loaded', events.length, 'future events from Google Calendar API');
     return `BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Unity Fusion//Google Calendar API//EN\r\n${events.join('\r\n')}\r\nEND:VCALENDAR`;
   } catch (err) {
     error('Error fetching Google Calendar API:', err instanceof Error ? err.message : String(err));
@@ -500,7 +495,7 @@ export async function fetchICalData(calendarId: string): Promise<string> {
 
   const cached = readCachedICal(calendarId);
   if (cached) {
-    info('Using cached calendar data from sessionStorage');
+    debug('Using cached calendar data from sessionStorage');
     return cached;
   }
 
@@ -647,7 +642,7 @@ export function initUpcomingEvents(root: HTMLElement): void {
     return;
   }
 
-  info('Initializing calendar for', calendarId, 'debug:', isDebugMode());
+  debug('Initializing calendar for', calendarId);
 
   let events: CalendarEvent[] = [];
 
@@ -754,6 +749,5 @@ export function initUpcomingEvents(root: HTMLElement): void {
   void loadEvents();
 }
 
-document.querySelectorAll<HTMLElement>('[data-upcoming-events]').forEach((root) => {
-  initUpcomingEvents(root);
-});
+// This module is imported by UpcomingEvents.astro only so its functions can be
+// used by upcoming-events-filters.ts. It does not auto-initialize widgets.

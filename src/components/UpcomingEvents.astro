@@ -57,64 +57,61 @@ const {
               placeholder="Search events…"
               aria-describedby="search-hint"
             />
+            <div class="upcoming-events__filters" data-filters>
+              <button
+                type="button"
+                class="upcoming-events__filter-toggle"
+                data-filter-toggle
+                aria-expanded="false"
+                aria-controls="filter-panel"
+                aria-label="Filters"
+                title="Filters"
+              >
+                <svg class="upcoming-events__filter-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                </svg>
+                <span class="upcoming-events__filter-count" aria-live="polite" hidden>0</span>
+              </button>
+
+              <div id="filter-panel" class="upcoming-events__filter-panel" hidden>
+                    <div class="upcoming-events__filter-group">
+                      <label class="upcoming-events__filter-label" for="filter-date-range">Date range</label>
+                      <select id="filter-date-range" class="upcoming-events__filter-select" data-filter="date-range">
+                        <option value="all">All upcoming</option>
+                        <option value="week">This week</option>
+                        <option value="month">This month</option>
+                        <option value="next-month">Next month</option>
+                      </select>
+                    </div>
+        
+                    <div class="upcoming-events__filter-group">
+                      <label class="upcoming-events__filter-label" for="filter-location">Location</label>
+                      <select id="filter-location" class="upcoming-events__filter-select" data-filter="location">
+                        <option value="all">All locations</option>
+                      </select>
+                    </div>
+        
+                    <div class="upcoming-events__filter-group">
+                      <label class="upcoming-events__filter-label" for="filter-type">Event type</label>
+                      <select id="filter-type" class="upcoming-events__filter-select" data-filter="type">
+                        <option value="all">All types</option>
+                        <option value="social">Social dance</option>
+                        <option value="workshop">Workshop</option>
+                        <option value="special">Special event</option>
+                      </select>
+                    </div>
+        
+                    <button
+                      type="button"
+                      class="upcoming-events__filter-clear"
+                      data-filter-clear
+                    >
+                      Clear all filters
+                    </button>
+                  </div>
+            </div>
           </div>
           <span id="search-hint" class="visually-hidden">Type to filter events by title, location, or description</span>
-        </div>
-
-        <div class="upcoming-events__filters" data-filters>
-          <button
-            type="button"
-            class="upcoming-events__filter-toggle"
-            data-filter-toggle
-            aria-expanded="false"
-            aria-controls="filter-panel"
-          >
-            <svg class="upcoming-events__filter-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
-            </svg>
-            <span class="upcoming-events__filter-label">Filters</span>
-            <span class="upcoming-events__filter-count" aria-live="polite" hidden>0</span>
-            <svg class="upcoming-events__chevron" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="6 9 12 15 18 9"></polyline>
-            </svg>
-          </button>
-
-          <div id="filter-panel" class="upcoming-events__filter-panel" hidden>
-            <div class="upcoming-events__filter-group">
-              <label class="upcoming-events__filter-label" for="filter-date-range">Date range</label>
-              <select id="filter-date-range" class="upcoming-events__filter-select" data-filter="date-range">
-                <option value="all">All upcoming</option>
-                <option value="week">This week</option>
-                <option value="month">This month</option>
-                <option value="next-month">Next month</option>
-              </select>
-            </div>
-
-            <div class="upcoming-events__filter-group">
-              <label class="upcoming-events__filter-label" for="filter-location">Location</label>
-              <select id="filter-location" class="upcoming-events__filter-select" data-filter="location">
-                <option value="all">All locations</option>
-              </select>
-            </div>
-
-            <div class="upcoming-events__filter-group">
-              <label class="upcoming-events__filter-label" for="filter-type">Event type</label>
-              <select id="filter-type" class="upcoming-events__filter-select" data-filter="type">
-                <option value="all">All types</option>
-                <option value="social">Social dance</option>
-                <option value="workshop">Workshop</option>
-                <option value="special">Special event</option>
-              </select>
-            </div>
-
-            <button
-              type="button"
-              class="upcoming-events__filter-clear"
-              data-filter-clear
-            >
-              Clear all filters
-            </button>
-          </div>
         </div>
       </div>
 
@@ -229,7 +226,7 @@ const {
 
   .upcoming-events__search-input {
     width: 100%;
-    padding: 0.625rem 0.875rem 0.625rem 2.75rem;
+    padding: 0.625rem 3.5rem 0.625rem 2.75rem;
     border: 1.5px solid rgba(7, 140, 140, 0.18);
     border-radius: 999px;
     background: var(--color-white);
@@ -259,20 +256,31 @@ const {
     color: var(--color-teal);
   }
 
-  /* Filters */
+  [hidden] {
+    display: none !important;
+  }
+
+  /* Filters (icon button inside the search field) */
   .upcoming-events__filters {
-    position: relative;
-    flex-shrink: 0;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: 0.35rem;
+    display: flex;
+    align-items: center;
   }
 
   .upcoming-events__filter-toggle {
     display: inline-flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 1rem 0.5rem 0.75rem;
-    border: 1.5px solid rgba(7, 140, 140, 0.18);
+    justify-content: center;
+    gap: 0.25rem;
+    min-width: 2.25rem;
+    height: 2.25rem;
+    padding: 0 0.6rem;
+    border: 0;
     border-radius: 999px;
-    background: var(--color-white);
+    background: transparent;
     color: var(--color-ink);
     font-family: var(--font-body);
     font-size: 0.9rem;

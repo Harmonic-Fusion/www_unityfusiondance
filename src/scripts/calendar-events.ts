@@ -334,69 +334,120 @@ function expandRecurringEvents(events: CalendarEvent[], maxDate: Date): Calendar
   return expanded;
 }
 
-async function fetchICalData(calendarId: string): Promise<string> {
-  const calendarUrl = `https://calendar.google.com/calendar/ical/${encodeURIComponent(calendarId)}/public/basic.ics`;
+const FETCH_TIMEOUT_MS = 8000;
+const FETCH_ROUNDS = 3;
+const CACHE_PREFIX = 'upcoming-events-ical:';
 
+function isICalText(data: string | null | undefined): data is string {
+  return typeof data === 'string' && data.includes('BEGIN:VCALENDAR');
+}
+
+async function fetchWithTimeout(url: string, init: RequestInit = {}): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
   try {
-    const directResponse = await fetch(calendarUrl);
-    if (directResponse.ok) {
-      return await directResponse.text();
-    }
-  } catch {
-    // Fall through to proxies
+    return await fetch(url, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
   }
+}
 
-  const proxies: {
-    name: string;
-    url: string;
-    parse: (data: unknown) => string | null;
-  }[] = [
+function readCachedICal(calendarId: string): string | null {
+  try {
+    return sessionStorage.getItem(CACHE_PREFIX + calendarId);
+  } catch {
+    return null;
+  }
+}
+
+function writeCachedICal(calendarId: string, data: string): void {
+  try {
+    sessionStorage.setItem(CACHE_PREFIX + calendarId, data);
+  } catch {
+    // Storage unavailable or full; caching is optional
+  }
+}
+
+async function tryFetchICalOnce(calendarUrl: string): Promise<string | null> {
+  const sources: { url: string; parse: (response: Response) => Promise<string | null> }[] = [
+    { url: calendarUrl, parse: (response) => response.text() },
     {
-      name: 'allorigins.win',
-      url: `https://api.allorigins.win/get?url=${encodeURIComponent(calendarUrl)}`,
-      parse: (data) =>
-        typeof data === 'object' && data && 'contents' in data
-          ? String((data as { contents: string }).contents)
-          : null,
+      url: `https://api.allorigins.win/raw?url=${encodeURIComponent(calendarUrl)}`,
+      parse: (response) => response.text(),
     },
     {
-      name: 'corsproxy.io',
+      url: `https://api.allorigins.win/get?url=${encodeURIComponent(calendarUrl)}`,
+      parse: async (response) => {
+        const data: unknown = await response.json();
+        if (typeof data !== 'object' || !data || !('contents' in data)) return null;
+        let contents = String((data as { contents: string }).contents);
+        if (contents.startsWith('data:')) {
+          const base64Match = contents.match(/base64,(.+)$/);
+          if (!base64Match?.[1]) return null;
+          contents = atob(base64Match[1]);
+        }
+        return contents;
+      },
+    },
+    {
       url: `https://corsproxy.io/?${encodeURIComponent(calendarUrl)}`,
-      parse: (data) => (typeof data === 'string' ? data : null),
+      parse: (response) => response.text(),
+    },
+    {
+      url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(calendarUrl)}`,
+      parse: (response) => response.text(),
     },
   ];
 
-  for (const proxy of proxies) {
-    try {
-      const response = await fetch(proxy.url, {
-        headers: { 'X-Requested-With': 'XMLHttpRequest' },
-      });
-      if (!response.ok) continue;
-
-      let proxyData: unknown;
-      try {
-        proxyData = await response.json();
-      } catch {
-        proxyData = await response.text();
+  // Race all sources so one slow or blocked source does not delay the first load
+  return new Promise((resolve) => {
+    let pending = sources.length;
+    let settled = false;
+    const finish = (value: string | null) => {
+      if (settled) return;
+      if (value) {
+        settled = true;
+        resolve(value);
+        return;
       }
+      pending -= 1;
+      if (pending === 0) {
+        settled = true;
+        resolve(null);
+      }
+    };
 
-      let icalData = proxy.parse(proxyData);
-      if (!icalData) continue;
-
-      if (icalData.startsWith('data:')) {
-        const base64Match = icalData.match(/base64,(.+)$/);
-        if (base64Match?.[1]) {
-          icalData = atob(base64Match[1]);
-        } else {
-          continue;
+    for (const source of sources) {
+      void (async () => {
+        try {
+          const response = await fetchWithTimeout(source.url);
+          if (!response.ok) return finish(null);
+          const data = await source.parse(response);
+          finish(isICalText(data) ? data : null);
+        } catch {
+          finish(null);
         }
-      }
+      })();
+    }
+  });
+}
 
-      return icalData;
-    } catch {
-      continue;
+export async function fetchICalData(calendarId: string): Promise<string> {
+  const calendarUrl = `https://calendar.google.com/calendar/ical/${encodeURIComponent(calendarId)}/public/basic.ics`;
+
+  for (let round = 0; round < FETCH_ROUNDS; round++) {
+    const data = await tryFetchICalOnce(calendarUrl);
+    if (data) {
+      writeCachedICal(calendarId, data);
+      return data;
+    }
+    if (round < FETCH_ROUNDS - 1) {
+      await new Promise((resolve) => setTimeout(resolve, 600 * (round + 1)));
     }
   }
+
+  const cached = readCachedICal(calendarId);
+  if (cached) return cached;
 
   throw new Error('Unable to load calendar feed. The calendar may need to be public.');
 }

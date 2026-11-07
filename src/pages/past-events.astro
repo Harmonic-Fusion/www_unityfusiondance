@@ -1,0 +1,34 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PastEvents from '../components/PastEvents.astro';
+import { links } from '../content/links';
+---
+
+<BaseLayout
+  title="Past Events"
+  description="A look back at Unity Fusion socials, workshops, and special gatherings in Eugene."
+>
+  <section class="section section--tight">
+    <div class="container">
+      <p class="section__eyebrow">Unity Fusion Dancing</p>
+      <h1 class="section__title">Past events</h1>
+      <p class="section__lead">
+        This is a look back at recent monthly socials and special gatherings.
+        <a href={links.subscribe} target="_blank" rel="noopener noreferrer">Subscribe to our email list</a>
+        or follow us on
+        <a href={links.facebook} target="_blank" rel="noopener noreferrer">Facebook</a>
+        to stay up to date.
+      </p>
+    </div>
+  </section>
+
+  <PastEvents />
+
+  <section class="section">
+    <div class="container">
+      <p class="section__lead">
+        Looking for what is next? <a href="/events/">View upcoming events</a>.
+      </p>
+    </div>
+  </section>
+</BaseLayout>

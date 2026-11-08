@@ -426,7 +426,7 @@ function googleEventToICal(event: GoogleCalendarEvent): string | null {
 }
 
 async function fetchGoogleCalendarEvents(calendarId: string): Promise<string | null> {
-  const apiKey = ***;
+  const apiKey = import.meta.env.PUBLIC_GOOGLE_CALENDAR_API_KEY;
 
   debug('Calendar ID:', calendarId);
   debug('PUBLIC_GOOGLE_CALENDAR_API_KEY:', maskKey(apiKey));
@@ -440,7 +440,16 @@ async function fetchGoogleCalendarEvents(calendarId: string): Promise<string | n
   today.setHours(0, 0, 0, 0);
   const timeMin = toRFC3339(today);
   const maxResults = 250;
-  const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?key=${encodeURIComponent(apiKey)}&timeMin=${encodeURIComponent(timeMin)}&maxResults=${maxResults}&singleEvents=true&orderBy=startTime`;
+  const url =
+    "https://www.googleapis.com/calendar/v3/calendars/" +
+    encodeURIComponent(calendarId) +
+    "/events?key=" +
+    encodeURIComponent(apiKey) +
+    "&timeMin=" +
+    encodeURIComponent(timeMin) +
+    "&maxResults=" +
+    String(maxResults) +
+    "&singleEvents=true&orderBy=startTime";
 
   debug('Request URL (key masked):', url.replace(apiKey, '***'));
 

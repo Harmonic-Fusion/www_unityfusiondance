@@ -592,7 +592,11 @@ export function initUpcomingEventsWithFilters(root: HTMLElement): void {
         .sort((a, b) => a.start.getTime() - b.start.getTime());
 
       renderEvents(allEvents);
-      initFilters(root, allEvents);
+      try {
+        initFilters(root, allEvents);
+      } catch (filterError) {
+        console.error('[calendar-events] initFilters failed:', filterError instanceof Error ? filterError.message : String(filterError), filterError instanceof Error ? filterError.stack : '');
+      }
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unable to load events. Please try again later.';
       showError(message);
@@ -612,5 +616,9 @@ export function initUpcomingEventsWithFilters(root: HTMLElement): void {
 document.querySelectorAll<HTMLElement>('[data-upcoming-events]').forEach((root) => {
   if (root.dataset.calendarInitialized) return;
   root.dataset.calendarInitialized = 'true';
-  initUpcomingEventsWithFilters(root);
+  try {
+    initUpcomingEventsWithFilters(root);
+  } catch (initError) {
+    console.error('[calendar-events] Widget init failed:', initError instanceof Error ? initError.message : String(initError), initError instanceof Error ? initError.stack : '');
+  }
 });

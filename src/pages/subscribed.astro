@@ -1,7 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Button from '../components/Button.astro';
-import { links } from '../content/links';
 ---
 
 <BaseLayout
@@ -27,10 +26,10 @@ import { links } from '../content/links';
         <Button href="/">Back to home</Button>
         <Button
           class="subscribe__calendar-btn"
-          href={links.eventsCalendarView}
+          href="/events"
           variant="ghost"
         >
-          Check the events calendar
+          Check out events
         </Button>
       </div>
     </div>

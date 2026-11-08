@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import Button from '../components/Button.astro';
 import { links } from '../content/links';
 ---
 
@@ -21,9 +22,7 @@ import { links } from '../content/links';
       <p class="section__lead">
         Stay up to date with Unity Fusion gatherings, workshops, and community news.
       </p>
-      <a class="btn" href={links.subscribe} target="_blank" rel="noopener noreferrer">
-        Subscribe to our mailing list
-      </a>
+      <Button href={links.subscribe}>Subscribe to our mailing list</Button>
     </div>
   </section>
 </BaseLayout>

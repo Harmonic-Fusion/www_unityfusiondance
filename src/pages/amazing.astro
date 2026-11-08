@@ -1,7 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import CalendarEmbed from '../components/CalendarEmbed.astro';
-import Link from '../components/Link.astro';
+import Button from '../components/Button.astro';
 import { links } from '../content/links';
 ---
 
@@ -34,9 +34,9 @@ import { links } from '../content/links';
         dance instructor <strong>Andrew Sutton</strong>, plus two amazing nights you will remember.
       </p>
       <div class="btn-row">
-        <Link class="btn btn--outline" href="/terms-amazing/" space={false}>
+        <Button href="/terms-amazing/" variant="outline">
           Liability Waiver &amp; Photo Release
-        </Link>
+        </Button>
       </div>
     </div>
   </section>

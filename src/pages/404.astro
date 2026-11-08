@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import Button from '../components/Button.astro';
 import { links, nav } from '../content/links';
 
 const suggestions = nav.filter((item) => item.href !== '/');
@@ -25,10 +26,8 @@ const suggestions = nav.filter((item) => item.href !== '/');
         may be out of date. Let's get you back on the floor.
       </p>
       <div class="btn-row lost__actions">
-        <a class="btn" href="/">Back to home</a>
-        <a class="btn btn--ghost" href={links.eventsCalendarView} target="_blank" rel="noopener noreferrer">
-          See upcoming events
-        </a>
+        <Button href="/">Back to home</Button>
+        <Button href={links.eventsCalendarView} variant="ghost">See upcoming events</Button>
       </div>
       {suggestions.length > 0 && (
         <nav class="lost__links" aria-label="Popular pages">

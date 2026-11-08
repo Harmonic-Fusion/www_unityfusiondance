@@ -1,4 +1,5 @@
 ---
+import Button from './Button.astro';
 import { links } from '../content/links';
 
 interface Props {
@@ -27,17 +28,8 @@ const {
       <header class="upcoming-events__header">
         <h2 class="section__title">Upcoming events</h2>
         <div class="btn-row upcoming-events__actions">
-          <a
-            class="btn btn--outline"
-            href={subscribeUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Add to Google Calendar
-          </a>
-          <a class="btn btn--outline" href={viewUrl} target="_blank" rel="noopener noreferrer">
-            View calendar
-          </a>
+          <Button href={subscribeUrl} variant="outline">Add to Google Calendar</Button>
+          <Button href={viewUrl} variant="outline">View calendar</Button>
         </div>
       </header>
 
@@ -136,7 +128,7 @@ const {
             <path d="M14 8l-6 6"></path>
           </svg>
           <p>No events match your filters.</p>
-          <button type="button" class="btn btn--outline" data-filters-reset>Clear filters</button>
+          <Button type="button" variant="outline" data-filters-reset>Clear filters</Button>
         </div>
       </div>
 

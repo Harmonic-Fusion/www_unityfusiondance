@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import Button from '../components/Button.astro';
 import Link from '../components/Link.astro';
 import { links } from '../content/links';
 ---
@@ -44,8 +45,8 @@ import { links } from '../content/links';
         </li>
       </ul>
       <div class="btn-row">
-        <Link class="btn" href={links.volunteerForm} space={false}>Volunteer Interest Form</Link>
-        <Link class="btn btn--outline" href={links.feedbackForm} space={false}>Feedback Form</Link>
+        <Button href={links.volunteerForm}>Volunteer Interest Form</Button>
+        <Button href={links.feedbackForm} variant="outline">Feedback Form</Button>
       </div>
     </div>
   </section>

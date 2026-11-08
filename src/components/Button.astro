@@ -1,0 +1,45 @@
+---
+import type { HTMLAttributes } from 'astro/types';
+
+type Variant = 'solid' | 'outline' | 'ghost';
+
+type AnchorAttrs = Omit<HTMLAttributes<'a'>, 'href' | 'class'>;
+type NativeAttrs = Omit<HTMLAttributes<'button'>, 'class' | 'type'>;
+
+interface Props extends AnchorAttrs, NativeAttrs {
+  href?: string;
+  variant?: Variant;
+  class?: string;
+  type?: 'button' | 'submit' | 'reset';
+}
+
+const {
+  href,
+  variant = 'solid',
+  class: className,
+  type = 'button',
+  target: targetProp,
+  rel: relProp,
+  ...rest
+} = Astro.props;
+
+const classes = ['btn', variant !== 'solid' && `btn--${variant}`, className]
+  .filter(Boolean)
+  .join(' ');
+
+const isNewTab = typeof href === 'string' && /^https?:/i.test(href);
+const target = targetProp ?? (isNewTab ? '_blank' : undefined);
+const rel = relProp ?? (target === '_blank' ? 'noopener noreferrer' : undefined);
+---
+
+{
+  href ? (
+    <a href={href} class={classes} target={target} rel={rel} {...rest}>
+      <slot />
+    </a>
+  ) : (
+    <button type={type} class={classes} {...rest}>
+      <slot />
+    </button>
+  )
+}

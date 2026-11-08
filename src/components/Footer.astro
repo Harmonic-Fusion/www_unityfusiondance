@@ -1,4 +1,5 @@
 ---
+import Button from './Button.astro';
 import Link from './Link.astro';
 import { links } from '../content/links';
 ---
@@ -13,7 +14,7 @@ import { links } from '../content/links';
           Get updates on socials, workshops, and community gatherings in Eugene.
         </p>
       </div>
-      <Link class="btn" href={links.subscribe} space={false}>Subscribe</Link>
+      <Button href={links.subscribe}>Subscribe</Button>
     </div>
   </div>
 

@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import Button from '../components/Button.astro';
 import Carousel from '../components/Carousel.astro';
 
 const carouselImages = [
@@ -32,8 +33,8 @@ const carouselImages = [
         Unity Fusion grows and enriches the fusion dance scene in Eugene through joyful gatherings.
       </p>
       <div class="btn-row">
-        <a class="btn" href="/events/">Upcoming Events</a>
-        <a class="btn btn--ghost" href="/subscribe/">Subscribe</a>
+        <Button href="/events/">Upcoming Events</Button>
+        <Button href="/subscribe/" variant="ghost">Subscribe</Button>
       </div>
     </div>
   </section>

@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import Button from '../components/Button.astro';
 import { links } from '../content/links';
 ---
 
@@ -23,10 +24,14 @@ import { links } from '../content/links';
         gatherings, workshops, and community news in Eugene. See you on the floor.
       </p>
       <div class="btn-row">
-        <a class="btn" href="/" rel="noopener noreferrer">Back to home</a>
-        <a class="btn btn--ghost subscribe__calendar-btn" href={links.eventsCalendarView} target="_blank" rel="noopener noreferrer">
+        <Button href="/">Back to home</Button>
+        <Button
+          class="subscribe__calendar-btn"
+          href={links.eventsCalendarView}
+          variant="ghost"
+        >
           Check the events calendar
-        </a>
+        </Button>
       </div>
     </div>
   </section>

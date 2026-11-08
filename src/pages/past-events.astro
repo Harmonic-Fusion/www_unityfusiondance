@@ -1,8 +1,9 @@
 ---
-import BaseLayout from '../layouts/BaseLayout.astro';
-import PastEvents from '../components/PastEvents.astro';
-import Link from '../components/Link.astro';
-import { links } from '../content/links';
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Button from "../components/Button.astro";
+import PastEvents from "../components/PastEvents.astro";
+import Link from "../components/Link.astro";
+import { links } from "../content/links";
 ---
 
 <BaseLayout
@@ -23,14 +24,25 @@ import { links } from '../content/links';
     </div>
   </section>
 
-  <PastEvents />
+  
+
+  <p>
+    We migrated to using google calendar for events. You can see all past
+    events. <Button href={links.eventsCalendarView} variant="outline"
+      >View calendar</Button
+    >
+  </p>
 
   <section class="section">
-    <div class="container">
-      <p class="section__lead">
-        Looking for what is next?
-        <Link href="/events/" space="before">View upcoming events</Link>.
-      </p>
-    </div>
+    <PastEvents />
+
+    <section class="section">
+      <div class="container">
+        <p class="section__lead">
+          Looking for what is next?
+          <Link href="/events/" space="before">View upcoming events</Link>.
+        </p>
+      </div>
+    </section>
   </section>
 </BaseLayout>

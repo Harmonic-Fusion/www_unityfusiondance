@@ -338,7 +338,16 @@ export function expandRecurringEvents(events: CalendarEvent[], limitDate: Date):
 
 const FETCH_TIMEOUT_MS = 8000;
 const FETCH_ROUNDS = 3;
-const CACHE_PREFIX = 'upcoming-events-ical:';
+const CACHE_PREFIX = 'calendar-events-ical:';
+
+export type CalendarFetchOptions = {
+  /** Inclusive lower bound for Google Calendar API (defaults to start of today). */
+  timeMin?: Date;
+  /** Exclusive-ish upper bound for Google Calendar API (optional). */
+  timeMax?: Date;
+  /** Distinguishes upcoming vs past caches for the same calendar. */
+  cacheKey?: string;
+};
 
 async function fetchWithTimeout(url: string, init: RequestInit = {}): Promise<Response> {
   const controller = new AbortController();
@@ -350,17 +359,21 @@ async function fetchWithTimeout(url: string, init: RequestInit = {}): Promise<Re
   }
 }
 
-function readCachedICal(calendarId: string): string | null {
+function cacheStorageKey(calendarId: string, cacheKey = 'upcoming'): string {
+  return `${CACHE_PREFIX}${cacheKey}:${calendarId}`;
+}
+
+function readCachedICal(calendarId: string, cacheKey?: string): string | null {
   try {
-    return sessionStorage.getItem(CACHE_PREFIX + calendarId);
+    return sessionStorage.getItem(cacheStorageKey(calendarId, cacheKey));
   } catch {
     return null;
   }
 }
 
-function writeCachedICal(calendarId: string, data: string): void {
+function writeCachedICal(calendarId: string, data: string, cacheKey?: string): void {
   try {
-    sessionStorage.setItem(CACHE_PREFIX + calendarId, data);
+    sessionStorage.setItem(cacheStorageKey(calendarId, cacheKey), data);
   } catch {
     // Storage unavailable or full; caching is optional
   }
@@ -437,8 +450,9 @@ function buildCalendarEventsUrl(
   apiKey: string,
   timeMin: string,
   maxResults: number,
+  timeMax?: string,
 ): string {
-  const query =
+  let query =
     'key=' +
     encodeURIComponent(apiKey) +
     '&timeMin=' +
@@ -446,6 +460,9 @@ function buildCalendarEventsUrl(
     '&maxResults=' +
     String(maxResults) +
     '&singleEvents=true&orderBy=startTime';
+  if (timeMax) {
+    query += '&timeMax=' + encodeURIComponent(timeMax);
+  }
   const path = 'calendars/' + encodeURIComponent(calendarId) + '/events?' + query;
 
   if (import.meta.env.DEV || isLocalHost()) {
@@ -454,7 +471,10 @@ function buildCalendarEventsUrl(
   return 'https://www.googleapis.com/calendar/v3/' + path;
 }
 
-async function fetchGoogleCalendarEvents(calendarId: string): Promise<string | null> {
+async function fetchGoogleCalendarEvents(
+  calendarId: string,
+  options: CalendarFetchOptions = {},
+): Promise<string | null> {
   const apiKey = import.meta.env.PUBLIC_GOOGLE_CALENDAR_API_KEY;
 
   debug('Calendar ID:', calendarId);
@@ -467,11 +487,14 @@ async function fetchGoogleCalendarEvents(calendarId: string): Promise<string | n
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const timeMin = toRFC3339(today);
+  const timeMinDate = options.timeMin ?? today;
+  const timeMin = toRFC3339(timeMinDate);
+  const timeMax = options.timeMax ? toRFC3339(options.timeMax) : undefined;
   const maxResults = 250;
-  const url = buildCalendarEventsUrl(calendarId, apiKey, timeMin, maxResults);
+  const url = buildCalendarEventsUrl(calendarId, apiKey, timeMin, maxResults, timeMax);
 
   debug('Request URL (key masked):', url.replace(apiKey, '***'));
+  debug('timeMin:', timeMin, 'timeMax:', timeMax ?? '(none)');
 
   try {
     const response = await fetchWithTimeout(url);
@@ -513,10 +536,11 @@ async function fetchGoogleCalendarEvents(calendarId: string): Promise<string | n
     debug('Parsed iCal events count:', events.length);
 
     if (events.length === 0) {
-      warn('Google Calendar API returned no future events');
-      return null;
+      warn('Google Calendar API returned no events for the requested range');
+      // Empty calendar is a valid response; return an empty VCALENDAR so callers can show empty state.
+      return `BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Unity Fusion//Google Calendar API//EN\r\nEND:VCALENDAR`;
     }
-    debug('Loaded', events.length, 'future events from Google Calendar API');
+    debug('Loaded', events.length, 'events from Google Calendar API');
     return `BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Unity Fusion//Google Calendar API//EN\r\n${events.join('\r\n')}\r\nEND:VCALENDAR`;
   } catch (err) {
     error('Error fetching Google Calendar API:', err instanceof Error ? err.message : String(err));
@@ -524,11 +548,15 @@ async function fetchGoogleCalendarEvents(calendarId: string): Promise<string | n
   }
 }
 
-export async function fetchICalData(calendarId: string): Promise<string> {
+export async function fetchICalData(
+  calendarId: string,
+  options: CalendarFetchOptions = {},
+): Promise<string> {
+  const cacheKey = options.cacheKey ?? 'upcoming';
   for (let round = 0; round < FETCH_ROUNDS; round++) {
-    const data = await fetchGoogleCalendarEvents(calendarId);
+    const data = await fetchGoogleCalendarEvents(calendarId, options);
     if (data) {
-      writeCachedICal(calendarId, data);
+      writeCachedICal(calendarId, data, cacheKey);
       return data;
     }
     if (round < FETCH_ROUNDS - 1) {
@@ -537,7 +565,7 @@ export async function fetchICalData(calendarId: string): Promise<string> {
     }
   }
 
-  const cached = readCachedICal(calendarId);
+  const cached = readCachedICal(calendarId, cacheKey);
   if (cached) {
     debug('Using cached calendar data from sessionStorage');
     return cached;
@@ -793,5 +821,249 @@ export function initUpcomingEvents(root: HTMLElement): void {
   void loadEvents();
 }
 
-// This module is imported by UpcomingEvents.astro only so its functions can be
-// used by upcoming-events-filters.ts. It does not auto-initialize widgets.
+function eventDedupeKey(event: CalendarEvent & { start: Date }): string {
+  return `${event.start.getTime()}|${event.summary || ''}|${event.location || ''}`;
+}
+
+export function initPastEvents(root: HTMLElement): void {
+  const calendarId = root.dataset.calendarId;
+  const monthsBack = Number(root.dataset.monthsBack || 6);
+  const loadingEl = root.querySelector<HTMLElement>('[data-past-loading]');
+  const loadingLabel = root.querySelector<HTMLElement>('[data-past-loading-label]');
+  const listEl = root.querySelector<HTMLElement>('[data-past-list]');
+  const moreEl = root.querySelector<HTMLElement>('[data-past-more]');
+  const loadMoreBtn = root.querySelector<HTMLButtonElement>('[data-past-load-more]');
+  const archiveEl = root.querySelector<HTMLElement>('[data-past-archive]');
+  const modal = root.querySelector<HTMLDialogElement>('[data-past-modal]');
+  const modalTitle = root.querySelector<HTMLElement>('[data-modal-title]');
+  const modalTime = root.querySelector<HTMLElement>('[data-modal-time]');
+  const modalLocation = root.querySelector<HTMLElement>('[data-modal-location]');
+  const modalDescription = root.querySelector<HTMLElement>('[data-modal-description]');
+  const modalClose = root.querySelector<HTMLElement>('[data-modal-close]');
+
+  if (!calendarId || !listEl || !modal || !modalTitle || !modalTime || !modalLocation || !modalDescription) {
+    error('Missing required past-events calendar DOM elements');
+    return;
+  }
+
+  debug('Initializing past events for', calendarId, 'monthsBack:', monthsBack);
+
+  let events: Array<CalendarEvent & { start: Date }> = [];
+  const seenKeys = new Set<string>();
+  /** Exclusive upper bound for the next older batch. */
+  let nextRangeEnd = new Date();
+  let loading = false;
+  let hasMore = true;
+  let archiveShown = false;
+
+  const setLoading = (active: boolean, label = 'Loading past events…') => {
+    loading = active;
+    loadingEl?.classList.toggle('is-active', active);
+    loadingEl?.setAttribute('aria-hidden', active ? 'false' : 'true');
+    if (loadingLabel) loadingLabel.textContent = label;
+    if (loadMoreBtn) {
+      loadMoreBtn.disabled = active;
+      loadMoreBtn.textContent = active ? 'Loading…' : 'Load more';
+    }
+  };
+
+  const setHasMore = (value: boolean) => {
+    hasMore = value;
+    if (!moreEl) return;
+    moreEl.hidden = !value;
+  };
+
+  const showArchive = () => {
+    if (archiveShown || !archiveEl) return;
+    archiveShown = true;
+    archiveEl.hidden = false;
+    debug('Showing 2023–2024 archived events');
+  };
+
+  const showError = (message: string) => {
+    const empty = document.createElement('div');
+    empty.className = 'past-events__empty';
+    empty.innerHTML = `
+      <p>${escapeHtml(message)}</p>
+      <button type="button" class="btn btn--outline" data-past-retry>Try again</button>
+    `;
+    listEl.replaceChildren(empty);
+    empty.querySelector('[data-past-retry]')?.addEventListener('click', () => {
+      void loadNextBatch({ reset: true });
+    });
+    setHasMore(false);
+  };
+
+  const showModal = (event: CalendarEvent) => {
+    modalTitle.textContent = event.summary || 'Untitled Event';
+    modalTime.textContent =
+      (event.start ? formatEventTime(event.start, event.end) : '') +
+      (event.start ? ` (${formatEventDate(event.start)})` : '');
+
+    const locationStr = decodeICalText(event.location) || 'Location TBD';
+    const mapsUrl = createMapsUrl(locationStr);
+    if (mapsUrl) {
+      modalLocation.innerHTML = `<a href="${mapsUrl}" target="_blank" rel="noopener noreferrer">${escapeHtml(locationStr)}</a>`;
+    } else {
+      modalLocation.textContent = locationStr;
+    }
+
+    modalDescription.innerHTML = cleanDescriptionHTML(
+      event.description || 'No description available.',
+    );
+    modal.showModal();
+  };
+
+  const attachCardListeners = (
+    cards: NodeListOf<HTMLElement>,
+    batch: Array<CalendarEvent & { start: Date }>,
+  ) => {
+    cards.forEach((card, index) => {
+      const event = batch[index];
+      if (!event) return;
+      const open = () => showModal(event);
+      card.addEventListener('click', (e) => {
+        const target = e.target as HTMLElement;
+        if (target.closest('a')) return;
+        open();
+      });
+      card.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          open();
+        }
+      });
+    });
+  };
+
+  const renderEmptyInitial = () => {
+    listEl.innerHTML = `
+      <div class="past-events__empty">
+        <p>No events found in this period. Try loading more, or view the full calendar.</p>
+      </div>
+    `;
+  };
+
+  const appendEvents = (batch: Array<CalendarEvent & { start: Date }>) => {
+    const empty = listEl.querySelector('.past-events__empty');
+    if (empty) empty.remove();
+
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = batch.map((event) => createEventCard(event)).join('');
+    const cards = wrapper.querySelectorAll<HTMLElement>('.upcoming-events__card');
+    attachCardListeners(cards, batch);
+    listEl.append(...Array.from(wrapper.children));
+  };
+
+  const loadNextBatch = async ({ reset = false }: { reset?: boolean } = {}) => {
+    if (loading) return;
+    if (!reset && !hasMore) return;
+
+    if (reset) {
+      events = [];
+      seenKeys.clear();
+      nextRangeEnd = new Date();
+      hasMore = true;
+      archiveShown = false;
+      listEl.replaceChildren();
+      if (archiveEl) archiveEl.hidden = true;
+      setHasMore(false);
+    }
+
+    const rangeEnd = new Date(nextRangeEnd);
+    const rangeStart = new Date(rangeEnd);
+    rangeStart.setMonth(rangeStart.getMonth() - monthsBack);
+    rangeStart.setHours(0, 0, 0, 0);
+
+    const isInitial = events.length === 0;
+    setLoading(true, isInitial ? 'Loading past events…' : 'Loading more events…');
+
+    try {
+      const cacheKey = `past-${rangeStart.toISOString().slice(0, 10)}_${rangeEnd.toISOString().slice(0, 10)}`;
+      const icalData = await fetchICalData(calendarId, {
+        timeMin: rangeStart,
+        timeMax: rangeEnd,
+        cacheKey,
+      });
+
+      const parsed = parseICal(icalData);
+      // API already expands recurring instances via singleEvents=true.
+      const batch = parsed
+        .filter((event): event is CalendarEvent & { start: Date } => Boolean(event.start))
+        .filter((event) => event.start >= rangeStart && event.start < rangeEnd)
+        .filter((event) => {
+          const key = eventDedupeKey(event);
+          if (seenKeys.has(key)) return false;
+          seenKeys.add(key);
+          return true;
+        })
+        .sort((a, b) => b.start.getTime() - a.start.getTime());
+
+      nextRangeEnd = rangeStart;
+
+      if (batch.length === 0) {
+        setHasMore(false);
+        if (events.length === 0) {
+          renderEmptyInitial();
+        }
+        showArchive();
+        debug('No events in batch', rangeStart.toISOString(), 'to', rangeEnd.toISOString());
+        return;
+      }
+
+      events = events.concat(batch);
+      appendEvents(batch);
+      setHasMore(true);
+      renderDebugPanel(root, events, events);
+      debug(
+        'Appended',
+        batch.length,
+        'past events (total',
+        events.length,
+        ') range',
+        rangeStart.toISOString(),
+        'to',
+        rangeEnd.toISOString(),
+      );
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unable to load events. Please try again later.';
+      error('Failed to load past events:', message);
+      if (events.length === 0) {
+        showError(message);
+      } else {
+        // Keep existing events; surface failure on the button briefly.
+        if (loadMoreBtn) loadMoreBtn.textContent = 'Try again';
+        warn(message);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  loadMoreBtn?.addEventListener('click', () => {
+    void loadNextBatch();
+  });
+
+  modalClose?.addEventListener('click', () => modal.close());
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) modal.close();
+  });
+
+  void loadNextBatch({ reset: true });
+}
+
+document.querySelectorAll<HTMLElement>('[data-past-events]').forEach((root) => {
+  if (root.dataset.calendarInitialized) return;
+  root.dataset.calendarInitialized = 'true';
+  try {
+    initPastEvents(root);
+  } catch (initError) {
+    error(
+      'Past events widget init failed:',
+      initError instanceof Error ? initError.message : String(initError),
+    );
+  }
+});
+
+// UpcomingEvents initializes via upcoming-events-filters.ts; this module also
+// auto-initializes past-events widgets when imported.

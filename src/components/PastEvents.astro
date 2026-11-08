@@ -1,44 +1,397 @@
 ---
-import Accordion from "./Accordion.astro";
-import { pastEvents, type PastEvent } from "../content/past-events";
+import Button from "./Button.astro";
+import { links } from "../content/links";
+import { archivedPastEvents } from "../content/past-events";
 
 interface Props {
-  events?: PastEvent[];
+  calendarId?: string;
+  monthsBack?: number;
+  viewUrl?: string;
+  /** When false, skip the in-component heading (use on pages that already have an h1). */
+  showHeading?: boolean;
 }
 
-const { events = pastEvents } = Astro.props;
-
-const defaultBody =
-  "Typical night: 7–8 pm lesson, 8–10:30 pm dancing. Sliding scale around $14/person.";
-
-const accordionItems = events.map((event) => {
-  const parts: string[] = [];
-  if (event.body) {
-    parts.push(
-      ...event.body
-        .trim()
-        .split(/\n\n+/)
-        .map((p) => `<p>${p.replace(/\n/g, "<br />")}</p>`),
-    );
-  }
-  if (event.facebook) {
-    parts.push(
-      `<p><a href="${event.facebook}" target="_blank" rel="noopener noreferrer">Facebook event</a></p>`,
-    );
-  }
-  if (!parts.length) {
-    parts.push(`<p>${defaultBody}</p>`);
-  }
-  return {
-    title: event.title,
-    subtitle: event.date,
-    html: parts.join(""),
-  };
-});
+const {
+  calendarId = links.eventsCalendarSrc,
+  monthsBack = 6,
+  viewUrl = links.eventsCalendarView,
+  showHeading = true,
+} = Astro.props;
 ---
 
-<section class="section">
+<section class="section section--tight">
   <div class="container">
-    <Accordion items={accordionItems} name="past-events" />
+    <div
+      class="past-events"
+      data-past-events
+      data-calendar-id={calendarId}
+      data-months-back={monthsBack}
+    >
+      <header
+        class:list={[
+          "past-events__header",
+          !showHeading && "past-events__header--actions-only",
+        ]}
+      >
+        {showHeading ? <h2 class="section__title">Past events</h2> : null}
+        <div class="btn-row past-events__actions">
+          <Button href={viewUrl} variant="outline">View calendar</Button>
+        </div>
+      </header>
+
+      <div
+        class="past-events__loading"
+        data-past-loading
+        aria-live="polite"
+        aria-hidden="true"
+      >
+        <span class="past-events__spinner" aria-hidden="true"></span>
+        <span data-past-loading-label>Loading past events…</span>
+      </div>
+
+      <div class="past-events__list" data-past-list></div>
+
+      <div class="past-events__more" data-past-more hidden>
+        <Button type="button" variant="outline" data-past-load-more
+          >Load more</Button
+        >
+      </div>
+
+      {
+        archivedPastEvents.length > 0 && (
+          <div class="past-events__archive" data-past-archive hidden>
+            <h3 class="past-events__archive-heading">
+              Archived events · 2023–2024
+            </h3>
+            <ul class="past-events__archive-list">
+              {archivedPastEvents.map((event) => (
+                <li class="past-events__archive-item">
+                  <span class="past-events__archive-event-title">
+                    {event.title}
+                  </span>
+                  <span class="past-events__archive-event-date">
+                    {event.date}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )
+      }
+
+      <dialog class="past-events__modal" data-past-modal>
+        <div class="past-events__modal-panel">
+          <button
+            type="button"
+            class="past-events__modal-close"
+            data-modal-close
+            aria-label="Close"
+          >
+            ×
+          </button>
+          <h3 class="past-events__modal-title" data-modal-title></h3>
+          <p class="past-events__modal-meta" data-modal-time></p>
+          <p class="past-events__modal-meta" data-modal-location></p>
+          <div class="past-events__modal-body prose" data-modal-description>
+          </div>
+        </div>
+      </dialog>
+    </div>
   </div>
 </section>
+
+<script>
+  import "../scripts/calendar-events";
+</script>
+
+<style>
+  .past-events__header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem 1.5rem;
+    margin-bottom: var(--space-sm);
+  }
+
+  .past-events__header .section__title {
+    margin-bottom: 0;
+  }
+
+  .past-events__actions {
+    flex-shrink: 0;
+  }
+
+  .past-events__header--actions-only {
+    justify-content: flex-end;
+  }
+
+  .past-events__lead {
+    margin: 0 0 var(--space-md);
+    color: var(--color-ink-soft);
+    font-size: 1rem;
+    max-width: 40rem;
+  }
+
+  .past-events__list {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .past-events__list :global(.upcoming-events__card) {
+    display: grid;
+    gap: 0.5rem;
+    padding: 1rem 1.15rem;
+    border-radius: 1rem;
+    background: rgba(255, 255, 255, 0.85);
+    border: 1px solid rgba(7, 140, 140, 0.14);
+    cursor: pointer;
+    transition:
+      border-color 0.25s var(--ease-out),
+      box-shadow 0.25s var(--ease-out),
+      transform 0.25s var(--ease-out),
+      background 0.25s var(--ease-out);
+  }
+
+  .past-events__list :global(.upcoming-events__card:hover),
+  .past-events__list :global(.upcoming-events__card:focus-visible) {
+    border-color: rgba(7, 140, 140, 0.35);
+    box-shadow: var(--shadow-soft);
+    transform: translateY(-2px);
+    background: var(--color-white);
+    outline: none;
+  }
+
+  .past-events__list :global(.upcoming-events__card-header) {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.35rem 1rem;
+  }
+
+  .past-events__list :global(.upcoming-events__card-title) {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    color: var(--color-ink);
+  }
+
+  .past-events__list :global(.upcoming-events__card-date) {
+    color: var(--color-teal);
+    font-size: 0.92rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .past-events__list :global(.upcoming-events__card-time) {
+    color: var(--color-ink-soft);
+    font-size: 0.95rem;
+  }
+
+  .past-events__list :global(.upcoming-events__card-location) {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    color: var(--color-ink-soft);
+    font-size: 0.9rem;
+  }
+
+  .past-events__list :global(.upcoming-events__card-location::before) {
+    content: "";
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: var(--color-mint);
+    flex-shrink: 0;
+  }
+
+  .past-events__list :global(.upcoming-events__location-link) {
+    text-decoration: none;
+  }
+
+  .past-events__list :global(.upcoming-events__location-link:hover) {
+    text-decoration: underline;
+    color: var(--color-teal);
+  }
+
+  .past-events__more {
+    display: flex;
+    justify-content: center;
+    margin-top: var(--space-md);
+  }
+
+  .past-events__more[hidden] {
+    display: none;
+  }
+
+  .past-events__archive {
+    margin-top: var(--space-lg);
+    padding: 1.15rem 1.25rem 1.25rem;
+    border-radius: 1rem;
+    background: rgba(255, 255, 255, 0.78);
+    border: 1px solid rgba(7, 140, 140, 0.14);
+  }
+
+  .past-events__archive[hidden] {
+    display: none;
+  }
+
+  .past-events__archive-heading {
+    margin: 0 0 0.85rem;
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    color: var(--color-ink);
+  }
+
+  .past-events__archive-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 0.2rem;
+  }
+
+  .past-events__archive-item {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.25rem 1rem;
+    padding: 0.45rem 0;
+    border-bottom: 1px solid rgba(7, 140, 140, 0.08);
+  }
+
+  .past-events__archive-item:last-child {
+    border-bottom: 0;
+  }
+
+  .past-events__archive-event-title {
+    color: var(--color-ink);
+    font-size: 0.95rem;
+  }
+
+  .past-events__archive-event-date {
+    color: var(--color-teal);
+    font-size: 0.88rem;
+    white-space: nowrap;
+  }
+
+  .past-events__empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 3rem 1.5rem;
+    border-radius: 1rem;
+    background: rgba(255, 255, 255, 0.78);
+    border: 1px dashed rgba(7, 140, 140, 0.2);
+    color: var(--color-ink-soft);
+  }
+
+  .past-events__empty p {
+    margin-bottom: 1rem;
+    font-size: 1.05rem;
+  }
+
+  .past-events__modal {
+    max-width: min(32rem, calc(100vw - 2rem));
+    padding: 0;
+    border: 0;
+    border-radius: 1rem;
+    background: transparent;
+  }
+
+  .past-events__modal::backdrop {
+    background: rgba(28, 28, 28, 0.45);
+  }
+
+  .past-events__modal-panel {
+    position: relative;
+    padding: 1.5rem 1.35rem 1.35rem;
+    border-radius: 1rem;
+    background: var(--color-white);
+    border: 1px solid rgba(7, 140, 140, 0.18);
+    box-shadow: var(--shadow-soft);
+  }
+
+  .past-events__modal-close {
+    position: absolute;
+    top: 0.65rem;
+    right: 0.75rem;
+    width: 2rem;
+    height: 2rem;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--color-ink-soft);
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: all 0.2s var(--ease-out);
+  }
+
+  .past-events__modal-close:hover {
+    color: var(--color-ink);
+    background: rgba(7, 140, 140, 0.08);
+  }
+
+  .past-events__modal-title {
+    margin: 0 2rem 0.75rem 0;
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    color: var(--color-ink);
+  }
+
+  .past-events__modal-meta {
+    margin: 0 0 0.4rem;
+    color: var(--color-teal);
+    font-size: 0.95rem;
+  }
+
+  .past-events__modal-body {
+    margin-top: 1rem;
+    color: var(--color-ink-soft);
+  }
+
+  .past-events__modal-body :global(p:last-child) {
+    margin-bottom: 0;
+  }
+
+  .past-events__loading {
+    display: none;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1.5rem 0;
+    color: var(--color-ink-soft);
+  }
+
+  .past-events__loading.is-active {
+    display: flex;
+  }
+
+  .past-events__spinner {
+    width: 1.15rem;
+    height: 1.15rem;
+    border: 2px solid rgba(7, 140, 140, 0.2);
+    border-top-color: var(--color-teal);
+    border-radius: 50%;
+    animation: past-spin 0.7s linear infinite;
+  }
+
+  @keyframes past-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  @media (max-width: 640px) {
+    .past-events__header {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .past-events__actions {
+      width: 100%;
+    }
+  }
+</style>

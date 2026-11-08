@@ -2,6 +2,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Button from '../components/Button.astro';
 import Carousel from '../components/Carousel.astro';
+import SubscribeButton from '../components/SubscribeButton.astro';
 
 const carouselImages = [
   { src: '/assets/images/dance-04.jpg', alt: 'Partners dancing at a Unity Fusion social' },
@@ -34,7 +35,7 @@ const carouselImages = [
       </p>
       <div class="btn-row">
         <Button href="/events/">Upcoming Events</Button>
-        <Button href="/subscribe/" variant="ghost">Subscribe</Button>
+        <SubscribeButton variant="ghost" />
       </div>
     </div>
   </section>

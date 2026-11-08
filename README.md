@@ -106,6 +106,26 @@ Namecheap but can take up to 48 hours.
 | `/terms/` | Liability release |
 | `/terms-amazing/` | Weekender waiver |
 
+## Google Calendar API key
+
+Upcoming events load via the Google Calendar JSON API and
+`PUBLIC_GOOGLE_CALENDAR_API_KEY` (local `.env`, GitHub Actions secret for Pages).
+
+In [Google Cloud Console → Credentials](https://console.cloud.google.com/apis/credentials),
+the key should use **HTTP referrer** application restrictions that include at least:
+
+- `https://unityfusiondance.com/*`
+- `https://www.unityfusiondance.com/*`
+
+Local `astro dev` / `astro preview` do **not** need localhost referrers: Vite proxies
+`/api/google-calendar` to Google with the production Referer. If you call the Calendar
+API from the browser without that proxy, also allow:
+
+- `http://localhost:4321/*`
+- `http://127.0.0.1:4321/*`
+
+The calendar itself must be shared publicly (or at least “See all event details”).
+
 ## External services
 
 Still hosted outside this repo (embeds / links):

@@ -1,6 +1,6 @@
 ---
-import Accordion from './Accordion.astro';
-import { pastEvents, type PastEvent } from '../content/past-events';
+import Accordion from "./Accordion.astro";
+import { pastEvents, type PastEvent } from "../content/past-events";
 
 interface Props {
   events?: PastEvent[];
@@ -9,7 +9,7 @@ interface Props {
 const { events = pastEvents } = Astro.props;
 
 const defaultBody =
-  'Monthly fusion social at Xcape Dance Academy (1416 W 7th Ave, Eugene OR 97402). Typical night: 7–8 pm lesson, 8–10:30 pm dancing. Sliding scale around $14/person.';
+  "Typical night: 7–8 pm lesson, 8–10:30 pm dancing. Sliding scale around $14/person.";
 
 const accordionItems = events.map((event) => {
   const parts: string[] = [];
@@ -18,7 +18,7 @@ const accordionItems = events.map((event) => {
       ...event.body
         .trim()
         .split(/\n\n+/)
-        .map((p) => `<p>${p.replace(/\n/g, '<br />')}</p>`),
+        .map((p) => `<p>${p.replace(/\n/g, "<br />")}</p>`),
     );
   }
   if (event.facebook) {
@@ -32,15 +32,13 @@ const accordionItems = events.map((event) => {
   return {
     title: event.title,
     subtitle: event.date,
-    html: parts.join(''),
+    html: parts.join(""),
   };
 });
 ---
 
 <section class="section">
   <div class="container">
-    <h2 class="section__title">Past events</h2>
-    <p class="section__lead">A look back at recent monthly socials and special gatherings.</p>
     <Accordion items={accordionItems} name="past-events" />
   </div>
 </section>

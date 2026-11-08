@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import Link from '../components/Link.astro';
 import { links } from '../content/links';
 ---
 
@@ -35,20 +36,16 @@ import { links } from '../content/links';
         </li>
         <li>
           <strong>Teaching</strong> — Help orient new dancers and bring dance skills to our community.
-          <a href={links.teachingPolicy} target="_blank" rel="noopener noreferrer">Teaching Policies</a>
+          <Link href={links.teachingPolicy} space="before">Teaching Policies</Link>
         </li>
         <li>
           <strong>DJ</strong> — Play music and craft an incredible journey for our dance.
-          <a href={links.djPolicy} target="_blank" rel="noopener noreferrer">DJ Policies</a>
+          <Link href={links.djPolicy} space="before">DJ Policies</Link>
         </li>
       </ul>
       <div class="btn-row">
-        <a class="btn" href={links.volunteerForm} target="_blank" rel="noopener noreferrer">
-          Volunteer Interest Form
-        </a>
-        <a class="btn btn--outline" href={links.feedbackForm} target="_blank" rel="noopener noreferrer">
-          Feedback Form
-        </a>
+        <Link class="btn" href={links.volunteerForm} space={false}>Volunteer Interest Form</Link>
+        <Link class="btn btn--outline" href={links.feedbackForm} space={false}>Feedback Form</Link>
       </div>
     </div>
   </section>
@@ -59,12 +56,12 @@ import { links } from '../content/links';
       <p>
         Unity Fusion requires contributions to make our events happen — typically through payments
         by attendees.
-        <a href="/contribute/">Details on how to contribute financially</a>.
+        <Link href="/contribute/" space="before">Details on how to contribute financially</Link>.
       </p>
       <h2 class="section__title">Contact us</h2>
       <p>
         For everything else, email Karsten or Dylan at
-        <a href={links.mailto}>unityfusiondance@gmail.com</a>.
+        <Link href={links.mailto} space="before">unityfusiondance@gmail.com</Link>.
       </p>
     </div>
   </section>

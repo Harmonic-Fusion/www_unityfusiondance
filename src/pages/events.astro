@@ -2,6 +2,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import UpcomingEvents from '../components/UpcomingEvents.astro';
 import PastEvents from '../components/PastEvents.astro';
+import Link from '../components/Link.astro';
 import { links } from '../content/links';
 ---
 
@@ -16,10 +17,11 @@ import { links } from '../content/links';
       <p class="section__lead">
         Unity Fusion holds frequent social dance events throughout the year. Monthly events are
         typically planned for the 1st Saturday of the month.
-        <a href={links.subscribe} target="_blank" rel="noopener noreferrer">Subscribe to our email list</a>
+        <Link href={links.subscribe}>Subscribe to our email list</Link>
         or follow us on
-        <a href={links.facebook} target="_blank" rel="noopener noreferrer">Facebook</a>
-        to stay up to date. Learn more in our <a href="/faq/">FAQ</a>.
+        <Link href={links.facebook}>Facebook</Link>
+        to stay up to date. Learn more in our
+        <Link href="/faq/" space="before">FAQ</Link>.
       </p>
     </div>
   </section>
@@ -28,7 +30,8 @@ import { links } from '../content/links';
   <section class="section">
     <div class="container">
       <p class="section__lead">
-        Looking back? <a href="/past-events/">View past events</a>.
+        Looking back?
+        <Link href="/past-events/" space="before">View past events</Link>.
       </p>
     </div>
   </section>

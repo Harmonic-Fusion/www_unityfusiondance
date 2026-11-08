@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import DocEmbed from '../components/DocEmbed.astro';
+import Link from '../components/Link.astro';
 import { links } from '../content/links';
 ---
 
@@ -14,11 +15,11 @@ import { links } from '../content/links';
       <h1 class="section__title">Terms Amazing Weekend</h1>
       <p class="section__lead">
         Unity Fusion + Dance Ninjas Weekend Terms. Questions?
-        <a href={links.mailto}>unityfusiondance@gmail.com</a>
+        <Link href={links.mailto} space="before">unityfusiondance@gmail.com</Link>
       </p>
       <DocEmbed src={links.termsAmazing} title="Amazing Weekender Terms" />
       <p style="margin-top: 1.25rem">
-        <a href="/amazing/">Back to Amazing Weekender</a>
+        <Link href="/amazing/" space={false}>Back to Amazing Weekender</Link>
       </p>
     </div>
   </section>

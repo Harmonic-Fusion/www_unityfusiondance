@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import DocEmbed from '../components/DocEmbed.astro';
+import Link from '../components/Link.astro';
 import { links } from '../content/links';
 ---
 
@@ -14,7 +15,7 @@ import { links } from '../content/links';
       <h1 class="section__title">Terms</h1>
       <p class="section__lead">
         Please email
-        <a href={links.mailto}>unityfusiondance@gmail.com</a>
+        <Link href={links.mailto}>unityfusiondance@gmail.com</Link>
         with any questions or concerns. We’re here to help!
       </p>
       <DocEmbed src={links.termsCurrent} title="Unity Fusion Terms CURRENT" />
@@ -26,14 +27,10 @@ import { links } from '../content/links';
       <h2 class="section__title">Historical</h2>
       <ul class="history-list">
         <li>
-          <a href={links.terms2024} target="_blank" rel="noopener noreferrer">
-            Unity Fusion Terms 2024-02-13
-          </a>
+          <Link href={links.terms2024} space={false}>Unity Fusion Terms 2024-02-13</Link>
         </li>
         <li>
-          <a href={links.terms2023} target="_blank" rel="noopener noreferrer">
-            Unity Fusion Terms 2023-05-13
-          </a>
+          <Link href={links.terms2023} space={false}>Unity Fusion Terms 2023-05-13</Link>
         </li>
       </ul>
     </div>

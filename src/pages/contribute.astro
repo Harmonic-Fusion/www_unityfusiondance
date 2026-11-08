@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import Link from '../components/Link.astro';
 import { links } from '../content/links';
 
 const scale = [
@@ -48,17 +49,15 @@ const scale = [
       <h2 class="section__title">How to give</h2>
       <ul class="pay-list">
         <li>
-          <a href={links.venmo} target="_blank" rel="noopener noreferrer">Pay by Venmo</a>
-          {' '}to Karsten Kaz (@KarstenKaz)
+          <Link href={links.venmo} space="after">Pay by Venmo</Link>to Karsten Kaz (@KarstenKaz)
         </li>
         <li>
-          <a href={links.paypal} target="_blank" rel="noopener noreferrer">Pay by PayPal</a>
-          {' '}to Karsten Kaczmar
+          <Link href={links.paypal} space="after">Pay by PayPal</Link>to Karsten Kaczmar
         </li>
         <li>Pay by cash into the box at the door</li>
         <li>Pay via QR code at the door</li>
         <li>
-          <a href={links.volunteerForm} target="_blank" rel="noopener noreferrer">Volunteer your time</a>
+          <Link href={links.volunteerForm} space={false}>Volunteer your time</Link>
         </li>
       </ul>
     </div>

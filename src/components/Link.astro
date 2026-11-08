@@ -1,0 +1,36 @@
+---
+import type { HTMLAttributes } from 'astro/types';
+
+type Space = boolean | 'before' | 'after';
+
+interface Props extends Omit<HTMLAttributes<'a'>, 'href'> {
+  href: string;
+  /**
+   * Surround the link with spaces so Astro doesn’t collapse them in prose.
+   * Use `before` / `after` when punctuation sits on one side.
+   * @default true
+   */
+  space?: Space;
+}
+
+const {
+  href,
+  class: className,
+  space = true,
+  target: targetProp,
+  rel: relProp,
+  ...rest
+} = Astro.props;
+
+const isNewTab = /^https?:/i.test(href);
+
+const target = targetProp ?? (isNewTab ? '_blank' : undefined);
+const rel = relProp ?? (target === '_blank' ? 'noopener noreferrer' : undefined);
+
+const spaceBefore = space === true || space === 'before';
+const spaceAfter = space === true || space === 'after';
+---
+
+{spaceBefore && ' '}
+<a href={href} class={className} target={target} rel={rel} {...rest}><slot /></a>
+{spaceAfter && ' '}

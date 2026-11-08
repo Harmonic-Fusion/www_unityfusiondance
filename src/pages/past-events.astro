@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import PastEvents from '../components/PastEvents.astro';
+import Link from '../components/Link.astro';
 import { links } from '../content/links';
 ---
 
@@ -14,9 +15,9 @@ import { links } from '../content/links';
       <h1 class="section__title">Past events</h1>
       <p class="section__lead">
         This is a look back at recent monthly socials and special gatherings.
-        <a href={links.subscribe} target="_blank" rel="noopener noreferrer">Subscribe to our email list</a>
+        <Link href={links.subscribe}>Subscribe to our email list</Link>
         or follow us on
-        <a href={links.facebook} target="_blank" rel="noopener noreferrer">Facebook</a>
+        <Link href={links.facebook}>Facebook</Link>
         to stay up to date.
       </p>
     </div>
@@ -27,7 +28,8 @@ import { links } from '../content/links';
   <section class="section">
     <div class="container">
       <p class="section__lead">
-        Looking for what is next? <a href="/events/">View upcoming events</a>.
+        Looking for what is next?
+        <Link href="/events/" space="before">View upcoming events</Link>.
       </p>
     </div>
   </section>

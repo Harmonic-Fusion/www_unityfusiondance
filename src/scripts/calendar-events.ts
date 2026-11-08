@@ -107,7 +107,7 @@ function parseICalDate(dateString: string): Date | null {
   return null;
 }
 
-function parseICal(icalData: string): CalendarEvent[] {
+export function parseICal(icalData: string): CalendarEvent[] {
   const events: CalendarEvent[] = [];
   const lines = icalData.split(/\r?\n/);
   let currentEvent: CalendarEvent | null = null;
@@ -271,7 +271,7 @@ function getNextWeekday(startDate: Date, targetDay: number): Date {
   return addDays(startDate, diff);
 }
 
-function expandRecurringEvents(events: CalendarEvent[], limitDate: Date): CalendarEvent[] {
+export function expandRecurringEvents(events: CalendarEvent[], limitDate: Date): CalendarEvent[] {
   const expanded: CalendarEvent[] = [];
   for (const event of events) {
     if (!event.start) continue;
@@ -425,6 +425,35 @@ function googleEventToICal(event: GoogleCalendarEvent): string | null {
   return lines.join('\r\n');
 }
 
+function isLocalHost(): boolean {
+  if (typeof window === 'undefined') return false;
+  const host = window.location.hostname;
+  return host === 'localhost' || host === '127.0.0.1';
+}
+
+/** Build the Calendar events URL. On localhost, use the Vite proxy so the API key's production-only HTTP referrer restrictions still pass. */
+function buildCalendarEventsUrl(
+  calendarId: string,
+  apiKey: string,
+  timeMin: string,
+  maxResults: number,
+): string {
+  const query =
+    'key=' +
+    encodeURIComponent(apiKey) +
+    '&timeMin=' +
+    encodeURIComponent(timeMin) +
+    '&maxResults=' +
+    String(maxResults) +
+    '&singleEvents=true&orderBy=startTime';
+  const path = 'calendars/' + encodeURIComponent(calendarId) + '/events?' + query;
+
+  if (import.meta.env.DEV || isLocalHost()) {
+    return '/api/google-calendar/' + path;
+  }
+  return 'https://www.googleapis.com/calendar/v3/' + path;
+}
+
 async function fetchGoogleCalendarEvents(calendarId: string): Promise<string | null> {
   const apiKey = import.meta.env.PUBLIC_GOOGLE_CALENDAR_API_KEY;
 
@@ -440,23 +469,29 @@ async function fetchGoogleCalendarEvents(calendarId: string): Promise<string | n
   today.setHours(0, 0, 0, 0);
   const timeMin = toRFC3339(today);
   const maxResults = 250;
-  const url =
-    "https://www.googleapis.com/calendar/v3/calendars/" +
-    encodeURIComponent(calendarId) +
-    "/events?key=" +
-    encodeURIComponent(apiKey) +
-    "&timeMin=" +
-    encodeURIComponent(timeMin) +
-    "&maxResults=" +
-    String(maxResults) +
-    "&singleEvents=true&orderBy=startTime";
+  const url = buildCalendarEventsUrl(calendarId, apiKey, timeMin, maxResults);
 
   debug('Request URL (key masked):', url.replace(apiKey, '***'));
 
   try {
     const response = await fetchWithTimeout(url);
     if (!response?.ok) {
-      error('Google Calendar API request failed:', response?.status, response?.statusText);
+      let detail = '';
+      try {
+        const body: unknown = await response?.clone().json();
+        if (body && typeof body === 'object' && 'error' in body) {
+          const apiError = (body as { error?: { message?: string; status?: string } }).error;
+          detail = apiError?.message || apiError?.status || '';
+        }
+      } catch {
+        // ignore JSON parse errors; status text is enough
+      }
+      error(
+        'Google Calendar API request failed:',
+        response?.status,
+        response?.statusText,
+        detail || undefined,
+      );
       return null;
     }
     const data: unknown = await response.json();
